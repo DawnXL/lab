@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>生活打卡 Bingo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
+    rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0f0c1a;
+      --surface: #1c1730;
+      --surface2: #251f3e;
+      --border: #352e5a;
+      --accent: #7c3aed;
+      --accent2: #a855f7;
+      --gold: #f59e0b;
+      --gold2: #fcd34d;
+      --green: #10b981;
+      --text: #e2e0f0;
+      --text-dim: #8b85b0;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background particles ── */
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 10%, rgba(124, 58, 237, .18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 60% at 80% 90%, rgba(168, 85, 247, .12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(245, 158, 11, .05) 0%, transparent 70%);
+    }
+
+    /* ── Layout ── */
+    .app {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 16px 60px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #a855f7, #f59e0b, #a855f7);
+      background-size: 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 4s linear infinite;
+      letter-spacing: -1px;
+    }
+
+    header p {
+      color: var(--text-dim);
+      margin-top: 6px;
+      font-size: .95rem;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 0%
+      }
+
+      100% {
+        background-position: 200%
+      }
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: .92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .25s;
+    }
+
+    .tab-btn:hover {
+      border-color: var(--accent2);
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, .4);
+    }
+
+    /* ── Panels ── */
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+      animation: fadeIn .3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* ─────────────────── SETUP PANEL ─────────────────── */
+    .setup-intro {
+      color: var(--text-dim);
+      font-size: .9rem;
+      margin-bottom: 16px;
+    }
+
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .item-input-wrap {
+      position: relative;
+    }
+
+    .item-num {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--accent2);
+      pointer-events: none;
+    }
+
+    .item-input {
+      width: 100%;
+      padding: 10px 10px 10px 32px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: .88rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+
+    .item-input:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, .15);
+    }
+
+    .item-input::placeholder {
+      color: var(--text-dim);
+    }
+
+    /* presets */
+    .presets-section {
+      margin-bottom: 20px;
+    }
+
+    .presets-section h3 {
+      font-size: .9rem;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .preset-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .preset-tag {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: .8rem;
+      font-weight: 700;
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .2s;
+    }
+
+    .preset-tag:hover {
+      border-color: var(--accent2);
+      color: var(--text);
+    }
+
+    .preset-tag .del {
+      color: #f87171;
+      font-size: .7rem;
+      margin-left: 2px;
+    }
+
+    .preset-tag .del:hover {
+      color: #ef4444;
+    }
+
+    .preset-save-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .preset-name-input {
+      flex: 1;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: .85rem;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .preset-name-input:focus {
+      border-color: var(--accent2);
+    }
+
+    /* buttons */
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-family: inherit;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(124, 58, 237, .35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(124, 58, 237, .5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text-dim);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent2);
+      color: var(--text);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #d97706, var(--gold));
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, .3);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(245, 158, 11, .45);
+    }
+
+    .setup-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ─────────────────── GAME PANEL ─────────────────── */
+    .game-layout {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media(max-width:700px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* score sidebar */
+    .score-sidebar {
+      min-width: 220px;
+    }
+
+    .score-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .score-card h3 {
+      font-size: .8rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .score-big {
+      font-size: 3rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .score-sub {
+      font-size: .8rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+
+    .lines-count {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent2);
+      margin-top: 8px;
+    }
+
+    .scoring-rules {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .scoring-rules h3 {
+      font-size: .8rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .rule-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .rule-row:last-child {
+      border-bottom: none;
+    }
+
+    .rule-label {
+      font-size: .82rem;
+      color: var(--text-dim);
+    }
+
+    .rule-pts {
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* bingo grid */
+    .bingo-area {}
+
+    .bingo-header {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .bingo-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .progress-bar-wrap {
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 3px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 3px;
+      transition: width .5s ease;
+    }
+
+    .bingo-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .bingo-cell {
+      aspect-ratio: 1;
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: clamp(.62rem, 1.4vw, .82rem);
+      font-weight: 500;
+      padding: 6px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s, transform .15s, box-shadow .2s;
+      user-select: none;
+      line-height: 1.3;
+      word-break: break-all;
+    }
+
+    .bingo-cell:hover {
+      border-color: var(--accent2);
+      transform: scale(1.04);
+      box-shadow: 0 4px 16px rgba(124, 58, 237, .2);
+    }
+
+    .bingo-cell.checked {
+      background: linear-gradient(135deg, rgba(124, 58, 237, .35), rgba(168, 85, 247, .2));
+      border-color: var(--accent2);
+      box-shadow: 0 0 20px rgba(168, 85, 247, .3);
+    }
+
+    .bingo-cell.checked::after {
+      content: '✓';
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: .75rem;
+      color: var(--accent2);
+      font-weight: 900;
+    }
+
+    .bingo-cell.line-win {
+      background: linear-gradient(135deg, rgba(245, 158, 11, .4), rgba(252, 211, 77, .2));
+      border-color: var(--gold);
+      box-shadow: 0 0 24px rgba(245, 158, 11, .4);
+      animation: pulse-gold .6s ease;
+    }
+
+    @keyframes pulse-gold {
+      0% {
+        box-shadow: 0 0 24px rgba(245, 158, 11, .4)
+      }
+
+      50% {
+        box-shadow: 0 0 40px rgba(245, 158, 11, .7)
+      }
+
+      100% {
+        box-shadow: 0 0 24px rgba(245, 158, 11, .4)
+      }
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--text);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+      animation: slideIn .3s ease;
+      max-width: 280px;
+    }
+
+    .toast.gold {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .toast.green {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(16, 185, 129, .08);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(30px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    @keyframes slideOut {
+      from {
+        opacity: 1;
+        transform: translateX(0)
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(30px)
+      }
+    }
+
+    /* ── Confetti canvas ── */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ── History Panel ── */
+    .history-empty {
+      color: var(--text-dim);
+      text-align: center;
+      padding: 40px;
+      font-size: .9rem;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .history-item {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .hi-date {
+      font-size: .78rem;
+      color: var(--text-dim);
+      min-width: 80px;
+    }
+
+    .hi-score {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--gold);
+      min-width: 60px;
+    }
+
+    .hi-lines {
+      font-size: .85rem;
+      color: var(--accent2);
+      font-weight: 700;
+      min-width: 60px;
+    }
+
+    .hi-checked {
+      font-size: .82rem;
+      color: var(--text-dim);
+    }
+
+    .clear-history-btn {
+      margin-top: 16px;
+    }
+
+    /* ── Game-over banner ── */
+    .game-over-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(245, 158, 11, .15), rgba(252, 211, 77, .08));
+      border: 2px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      animation: fadeIn .4s ease;
+    }
+
+    .game-over-banner.show {
+      display: block;
+    }
+
+    .game-over-banner h2 {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--gold);
+    }
+
+    .game-over-banner p {
+      color: var(--text-dim);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="confetti-canvas"></canvas>
+  <div class="bg-glow"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="app">
+    <header>
+      <div style="position: absolute; right: 0; top: 0;">
+        <button class="btn btn-secondary" onclick="toggleLanguage()" id="langBtn"
+          style="font-size: .75rem; padding: 6px 12px;">EN / 中</button>
+      </div>
+      <h1 id="ui-title">✦ 生活打卡 Bingo ✦</h1>
+      <p id="ui-subtitle">填入25个目标，随机生成Bingo矩阵，完成挑战赢取积分！</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('setup')" id="tab-setup">⚙ <span
+          data-i18n="nav_setup">设置</span></button>
+      <button class="tab-btn" onclick="switchTab('game')" id="tab-game">🎯 <span data-i18n="nav_game">游戏</span></button>
+      <button class="tab-btn" onclick="switchTab('history')" id="tab-history">📊 <span
+          data-i18n="nav_history">记录</span></button>
+    </div>
+
+    <!-- SETUP PANEL -->
+    <div class="panel active" id="panel-setup">
+      <p class="setup-intro" data-i18n="setup_intro">请填入 25 个打卡项目，或从已保存的预设中加载。</p>
+
+      <div class="presets-section">
+        <h3 data-i18n="presets_title">📁 已保存预设</h3>
+        <div class="preset-list" id="presetList"></div>
+        <div class="preset-save-row">
+          <input class="preset-name-input" id="presetNameInput" type="text" data-i18n-placeholder="preset_placeholder"
+            placeholder="输入预设名称…" maxlength="20" />
+          <button class="btn btn-secondary" onclick="savePreset()">💾 <span
+              data-i18n="btn_save_current">保存当前</span></button>
+        </div>
+      </div>
+
+      <div class="items-grid" id="itemsGrid"></div>
+
+      <div class="setup-actions">
+        <button class="btn btn-primary" onclick="generateBoard()">🎲 <span data-i18n="btn_generate">随机生成 Bingo
+            板</span></button>
+        <button class="btn btn-secondary" onclick="clearItems()">🗑 <span data-i18n="btn_clear">清空</span></button>
+        <button class="btn btn-secondary" onclick="fillDemo()">✨ <span data-i18n="btn_demo">示例填充</span></button>
+      </div>
+    </div>
+
+    <!-- GAME PANEL -->
+    <div class="panel" id="panel-game">
+      <div class="game-over-banner" id="gameOverBanner">
+        <h2 data-i18n="game_over_title">🎉 全板完成！BINGO！</h2>
+        <p data-i18n="game_over_msg">恭喜你完成所有打卡项目！游戏最终得分已记录。</p>
+      </div>
+      <div class="game-layout">
+        <div class="bingo-area">
+          <div class="bingo-header">
+            <h2 data-i18n="game_board_title">📋 打卡 Bingo 板</h2>
+            <button class="btn btn-secondary" onclick="switchTab('setup')" style="font-size:.8rem;padding:7px 12px;"
+              data-i18n="btn_back">← 返回设置</button>
+            <button class="btn btn-primary" onclick="endGame()" style="font-size:.8rem;padding:7px 12px;"
+              data-i18n="btn_end">🏁 结束游戏</button>
+            <button class="btn btn-gold" onclick="resetGame()" style="font-size:.8rem;padding:7px 12px;"
+              data-i18n="btn_reset">🔄 重置</button>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar" id="progressBar" style="width:0%"></div>
+          </div>
+          <div class="bingo-grid" id="bingoGrid"></div>
+        </div>
+        <div class="score-sidebar">
+          <div class="score-card">
+            <h3 data-i18n="score_title">🏆 当前得分</h3>
+            <div class="score-big" id="scoreDisplay">0</div>
+            <div class="score-sub"><span data-i18n="score_lines">已完成连线：</span><span class="lines-count"
+                id="linesDisplay">0</span> <span data-i18n="unit_lines">条</span></div>
+            <div class="score-sub" style="margin-top:6px"><span data-i18n="score_checked">已打卡：</span><span
+                id="checkedDisplay" style="color:var(--accent2);font-weight:700">0</span> / 25</div>
+          </div>
+          <div class="scoring-rules">
+            <h3 data-i18n="rules_title">📐 计分规则</h3>
+            <div id="rulesList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div class="panel" id="panel-history">
+      <div class="history-list" id="historyList"></div>
+      <button class="btn btn-secondary clear-history-btn" onclick="clearHistory()" style="margin-top:16px"
+        data-i18n="btn_clear_history">🗑 清空所有记录</button>
+    </div>
+  </div>
+
+  <script>
+    /* ═══════════════════════════ I18N ═══════════════════════════ */
+    const LANGS = {
+      zh: {
+        title: "✦ 生活打卡 Bingo ✦",
+        subtitle: "填入25个目标，随机生成Bingo矩阵，完成挑战赢取积分！",
+        nav_setup: "设置",
+        nav_game: "游戏",
+        nav_history: "记录",
+        setup_intro: "请填入 25 个打卡项目，或从已保存的预设中加载。",
+        presets_title: "📁 已保存预设",
+        preset_placeholder: "输入预设名称…",
+        preset_none: "暂无保存的预设",
+        btn_save_current: "保存当前",
+        btn_generate: "随机生成 Bingo 板",
+        btn_clear: "清空",
+        btn_demo: "示例填充",
+        game_over_title: "🎉 全板完成！BINGO！",
+        game_over_msg: "恭喜你完成所有打卡项目！游戏最终得分已记录。",
+        game_board_title: "📋 打卡 Bingo 板",
+        btn_back: "← 返回设置",
+        btn_end: "🏁 结束游戏",
+        btn_reset: "🔄 重置",
+        score_title: "🏆 当前得分",
+        score_lines: "已完成连线：",
+        unit_lines: "条",
+        score_checked: "已打卡：",
+        rules_title: "📐 计分规则",
+        btn_clear_history: "清空所有记录",
+        rule_line: "条连线",
+        rule_full: "12条连线（全满）",
+        rule_half_bonus: "打卡≥13格（奖励）",
+        rule_all_bonus: "25格全部打卡",
+        toast_need_more: (n) => `还差 ${n} 个项目！`,
+        toast_generated: "🎲 新的 Bingo 板已生成！",
+        toast_reset: "🔄 游戏已重置！",
+        toast_line_win: (pts) => `🏆 连线！+${pts}分`,
+        toast_preset_saved: (name) => `✅ 预设「${name}」已保存！`,
+        toast_preset_loaded: (name) => `📦 已加载预设「${name}」`,
+        toast_preset_deleted: (name) => `🗑 预设「${name}」已删除`,
+        toast_history_cleared: "🗑 记录已清空",
+        toast_game_ended: "🏁 游戏已结束，记录已保存！",
+        toast_no_game: "请先开启一局游戏",
+        history_empty: "暂无游戏记录<br>完成第一局游戏后将自动保存！",
+        history_pts: "分",
+        history_lines: "条线",
+        history_checked: "打卡",
+        input_placeholder: "打卡项目",
+      },
+      en: {
+        title: "✦ Life Check-in Bingo ✦",
+        subtitle: "Fill 25 goals, generate a task grid, and finish challenges for points!",
+        nav_setup: "Setup",
+        nav_game: "Game",
+        nav_history: "History",
+        setup_intro: "Fill in 25 items or load from a saved preset.",
+        presets_title: "📁 Saved Presets",
+        preset_placeholder: "Enter preset name...",
+        preset_none: "No saved presets yet",
+        btn_save_current: "Save Current",
+        btn_generate: "Generate Bingo Board",
+        btn_clear: "Clear All",
+        btn_demo: "Fill Demo",
+        game_over_title: "🎉 FULL BOARD! BINGO!",
+        game_over_msg: "Congrats! You finished every single task on the board!",
+        game_board_title: "📋 Bingo Board",
+        btn_back: "← Back to Setup",
+        btn_end: "🏁 Finish Game",
+        btn_reset: "🔄 Reset",
+        score_title: "🏆 Current Score",
+        score_lines: "Lines Completed: ",
+        unit_lines: "",
+        score_checked: "Tasks Finished: ",
+        rules_title: "📐 Scoring Rules",
+        btn_clear_history: "Clear All History",
+        rule_line: " Lines",
+        rule_full: "12 Lines (Full Board)",
+        rule_half_bonus: "Tasks ≥ 13 (Bonus)",
+        rule_all_bonus: "All 25 Tasks Done",
+        toast_need_more: (n) => `Need ${n} more items!`,
+        toast_generated: "🎲 New Bingo board generated!",
+        toast_reset: "🔄 Game reset!",
+        toast_line_win: (pts) => `🏆 BINGO! +${pts} pts`,
+        toast_preset_saved: (name) => `✅ Preset "${name}" saved!`,
+        toast_preset_loaded: (name) => `📦 Loaded preset "${name}"`,
+        toast_preset_deleted: (name) => `🗑 Preset "${name}" deleted`,
+        toast_history_cleared: "🗑 History cleared",
+        toast_game_ended: "🏁 Game finished & history saved!",
+        toast_no_game: "Please start a game first",
+        history_empty: "No game records yet.<br>Complete your first game to save progress!",
+        history_pts: " pts",
+        history_lines: " lines",
+        history_checked: "Checked",
+        input_placeholder: "Goal Item",
+      }
+    };
+
+    let currLang = localStorage.getItem('bingo_lang') || 'zh';
+
+    function toggleLanguage() {
+      currLang = currLang === 'zh' ? 'en' : 'zh';
+      localStorage.setItem('bingo_lang', currLang);
+      applyLanguage();
+    }
+
+    function applyLanguage() {
+      const l = LANGS[currLang];
+      // Static elements
+      document.getElementById('ui-title').textContent = l.title;
+      document.getElementById('ui-subtitle').textContent = l.subtitle;
+
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (l[key]) el.textContent = l[key];
+      });
+
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (l[key]) el.placeholder = l[key];
+      });
+
+      // Re-render dynamic parts
+      renderRules();
+      renderPresets();
+      renderHistory();
+
+      // Update input placeholders
+      for (let i = 0; i < 25; i++) {
+        const inp = document.getElementById('item-' + i);
+        if (inp) inp.placeholder = `${l.input_placeholder} ${i + 1}`;
+      }
+    }
+
+    /* ═══════════════════════════ STATE ═══════════════════════════ */
+    const SCORING = [
+      { lines: 0, pts: 0, label: 'none', key: 'none' },
+      { lines: 1, pts: 50, label: 'l1', key: 'l1' },
+      { lines: 2, pts: 80, label: 'l2', key: 'l2' },
+      { lines: 3, pts: 110, label: 'l3', key: 'l3' },
+      { lines: 4, pts: 140, label: 'l4', key: 'l4' },
+      { lines: 5, pts: 170, label: 'l5', key: 'l5' },
+      { lines: 6, pts: 210, label: 'l6', key: 'l6' },
+      { lines: 7, pts: 260, label: 'l7', key: 'l7' },
+      { lines: 8, pts: 320, label: 'l8', key: 'l8' },
+      { lines: 9, pts: 390, label: 'l9', key: 'l9' },
+      { lines: 10, pts: 500, label: 'l10', key: 'l10' },
+      { lines: 11, pts: 650, label: 'l11', key: 'l11' },
+      { lines: 12, pts: 999, label: 'full', key: 'full' },
+    ];
+    // Bonus scores
+    const BONUS_ALL = 2000;    // all 25 checked
+    const BONUS_HALF = 200;    // 13+ checked
+
+    let board = [];      // array of 25 strings
+    let checked = [];    // bool[25]
+    let score = 0;
+    let completedLines = new Set();   // set of line-ids
+    let prevLineCount = 0;
+
+    const DEMO_ITEMS = [
+      '早起7点前', '运动30分钟', '读书20页', '喝8杯水', '冥神10分钟',
+      '吃蔬菜', '不刷手机看剧', '学习新知识', '整理房间', '写日记',
+      '打电话给家人', '出门散步', '早睡11点前', '不吃外卖', '做饭',
+      '画画/手账', '听播客/音频', '拉伸放松', '感恩日记', '记账',
+      '无糖饮料', '整理桌面', '回复消息', '背单词', '看电影'
+    ];
+
+    /* ═══════════════════════════ INIT ═══════════════════════════ */
+    function init() {
+      buildItemInputs();
+      applyLanguage();
+    }
+
+    function buildItemInputs() {
+      const grid = document.getElementById('itemsGrid');
+      grid.innerHTML = '';
+      const l = LANGS[currLang];
+      for (let i = 0; i < 25; i++) {
+        const wrap = document.createElement('div');
+        wrap.className = 'item-input-wrap';
+        wrap.innerHTML = `<span class="item-num">${i + 1}</span>
+    <input class="item-input" id="item-${i}" type="text" placeholder="${l.input_placeholder} ${i + 1}" maxlength="12" />`;
+        grid.appendChild(wrap);
+      }
+    }
+
+    function renderRules() {
+      const el = document.getElementById('rulesList');
+      const l = LANGS[currLang];
+      const rows = [
+        { label: `1${l.rule_line}`, pts: formatPts(1) },
+        { label: `2${l.rule_line}`, pts: formatPts(2) },
+        { label: `3${l.rule_line}`, pts: formatPts(3) },
+        { label: `5${l.rule_line}`, pts: formatPts(5) },
+        { label: `8${l.rule_line}`, pts: formatPts(8) },
+        { label: l.rule_full, pts: formatPts(12) },
+        { label: l.rule_half_bonus, pts: `+${BONUS_HALF}` },
+        { label: l.rule_all_bonus, pts: `+${BONUS_ALL}` },
+      ];
+      el.innerHTML = rows.map(r => `
+    <div class="rule-row">
+      <span class="rule-label">${r.label}</span>
+      <span class="rule-pts">${r.pts}</span>
+    </div>
+  `).join('');
+    }
+
+    function formatPts(lines) {
+      // cumulative score up to N lines
+      let total = 0;
+      for (let i = 1; i <= lines; i++) {
+        const s = SCORING.find(x => x.lines === i);
+        if (s) total += s.pts;
+      }
+      return total;
+    }
+
+    /* ═══════════════════════════ TABS ═══════════════════════════ */
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      document.getElementById('panel-' + name).classList.add('active');
+      if (name === 'history') renderHistory();
+    }
+
+    /* ═══════════════════════════ SETUP ═══════════════════════════ */
+    function getItems() {
+      return Array.from({ length: 25 }, (_, i) => document.getElementById('item-' + i).value.trim());
+    }
+
+    function setItems(arr) {
+      for (let i = 0; i < 25; i++) {
+        document.getElementById('item-' + i).value = arr[i] || '';
+      }
+    }
+
+    function clearItems() { setItems([]); }
+
+    function fillDemo() { setItems(DEMO_ITEMS); }
+
+    function generateBoard() {
+      const items = getItems();
+      const filled = items.filter(x => x.length > 0);
+      const l = LANGS[currLang];
+      if (filled.length < 25) {
+        toast(l.toast_need_more(25 - filled.length), 'warn');
+        return;
+      }
+      // shuffle
+      const shuffled = [...items].sort(() => Math.random() - .5);
+      board = shuffled;
+      checked = Array(25).fill(false);
+      score = 0;
+      completedLines = new Set();
+      prevLineCount = 0;
+      renderBingoGrid();
+      updateScore();
+      document.getElementById('gameOverBanner').classList.remove('show');
+      switchTab('game');
+      toast(l.toast_generated, 'green');
+    }
+
+    function resetGame() {
+      const l = LANGS[currLang];
+      if (board.length === 0) { toast(l.toast_no_game); return; }
+      checked = Array(25).fill(false);
+      score = 0;
+      completedLines = new Set();
+      prevLineCount = 0;
+      renderBingoGrid();
+      updateScore();
+      document.getElementById('gameOverBanner').classList.remove('show');
+      toast(l.toast_reset);
+    }
+
+    /* ═══════════════════════════ BOARD ═══════════════════════════ */
+    function renderBingoGrid() {
+      const grid = document.getElementById('bingoGrid');
+      grid.innerHTML = '';
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'bingo-cell';
+        cell.id = 'cell-' + i;
+        cell.textContent = board[i];
+        if (checked[i]) cell.classList.add('checked');
+        cell.addEventListener('click', () => toggleCell(i));
+        grid.appendChild(cell);
+      }
+      refreshWinCells();
+    }
+
+    function toggleCell(i) {
+      checked[i] = !checked[i];
+      const cell = document.getElementById('cell-' + i);
+      cell.classList.toggle('checked', checked[i]);
+      updateScore();
+    }
+
+    /* ═══════════════════════════ SCORING ═══════════════════════════ */
+    function getLines() {
+      const lines = [];
+      for (let r = 0; r < 5; r++) lines.push([r * 5, r * 5 + 1, r * 5 + 2, r * 5 + 3, r * 5 + 4]);
+      for (let c = 0; c < 5; c++) lines.push([c, c + 5, c + 10, c + 15, c + 20]);
+      lines.push([0, 6, 12, 18, 24]);
+      lines.push([4, 8, 12, 16, 20]);
+      return lines;
+    }
+
+    function lineId(line) { return line.join('-'); }
+
+    function updateScore() {
+      const lines = getLines();
+      const newlyWon = [];
+      const l = LANGS[currLang];
+
+      let currentWinLines = new Set();
+      for (const line of lines) {
+        if (line.every(i => checked[i])) {
+          const id = lineId(line);
+          currentWinLines.add(id);
+          if (!completedLines.has(id)) {
+            completedLines.add(id);
+            newlyWon.push(line);
+          }
+        }
+      }
+
+      const lineCount = completedLines.size;
+      let linePts = 0;
+      for (let i = 1; i <= lineCount; i++) {
+        const s = SCORING.find(x => x.lines === i);
+        if (s) linePts += s.pts;
+      }
+
+      const checkedCount = checked.filter(Boolean).length;
+      let bonus = 0;
+      if (checkedCount >= 13) bonus += BONUS_HALF;
+      if (checkedCount === 25) bonus += BONUS_ALL;
+
+      score = linePts + bonus;
+
+      if (newlyWon.length > 0) {
+        for (const line of newlyWon) {
+          const pts = SCORING.find(x => x.lines === lineCount)?.pts || 0;
+          toast(l.toast_line_win(pts), 'gold');
+          if (lineCount === 12) triggerConfetti();
+          else triggerMiniConfetti();
+        }
+      }
+
+      refreshWinCells();
+      document.getElementById('scoreDisplay').textContent = score;
+      document.getElementById('linesDisplay').textContent = lineCount;
+      document.getElementById('checkedDisplay').textContent = checkedCount;
+
+      const pct = ((checkedCount) / 25) * 100;
+      document.getElementById('progressBar').style.width = pct + '%';
+
+      if (checkedCount === 25) {
+        document.getElementById('gameOverBanner').classList.add('show');
+      }
+
+      prevLineCount = lineCount;
+    }
+
+    function endGame() {
+      const l = LANGS[currLang];
+      if (board.length === 0) { toast(l.toast_no_game); return; }
+      saveHistory();
+      toast(l.toast_game_ended, 'green');
+      switchTab('history');
+    }
+
+    function refreshWinCells() {
+      document.querySelectorAll('.bingo-cell').forEach(c => c.classList.remove('line-win'));
+      const lines = getLines();
+      for (const line of lines) {
+        const id = lineId(line);
+        if (completedLines.has(id)) {
+          line.forEach(i => {
+            const el = document.getElementById('cell-' + i);
+            if (el) el.classList.add('line-win');
+          });
+        }
+      }
+    }
+
+    /* ═══════════════════════════ PRESETS ═══════════════════════════ */
+    function getPresets() { return JSON.parse(localStorage.getItem('bingo_presets') || '{}'); }
+    function savePresets(p) { localStorage.setItem('bingo_presets', JSON.stringify(p)); }
+
+    function renderPresets() {
+      const presets = getPresets();
+      const list = document.getElementById('presetList');
+      const names = Object.keys(presets);
+      const l = LANGS[currLang];
+      if (names.length === 0) {
+        list.innerHTML = `<span style="color:var(--text-dim);font-size:.82rem">${l.preset_none}</span>`;
+        return;
+      }
+      list.innerHTML = names.map(name => `
+    <span class="preset-tag">
+      <span onclick="loadPreset('${name}')" title="Load ${name}">📦 ${name}</span>
+      <span class="del" onclick="deletePreset('${name}')" title="Delete">✕</span>
+    </span>
+  `).join('');
+    }
+
+    function savePreset() {
+      const name = document.getElementById('presetNameInput').value.trim();
+      const l = LANGS[currLang];
+      if (!name) { toast(currLang === 'zh' ? '请输入预设名称' : 'Enter preset name'); return; }
+      const items = getItems();
+      const filled = items.filter(x => x.length > 0);
+      if (filled.length === 0) { toast(currLang === 'zh' ? '请先填入打卡项目' : 'Empty items'); return; }
+      const presets = getPresets();
+      presets[name] = items;
+      savePresets(presets);
+      renderPresets();
+      document.getElementById('presetNameInput').value = '';
+      toast(l.toast_preset_saved(name), 'green');
+    }
+
+    function loadPreset(name) {
+      const presets = getPresets();
+      const l = LANGS[currLang];
+      if (presets[name]) {
+        setItems(presets[name]);
+        toast(l.toast_preset_loaded(name));
+      }
+    }
+
+    function deletePreset(name) {
+      const presets = getPresets();
+      const l = LANGS[currLang];
+      delete presets[name];
+      savePresets(presets);
+      renderPresets();
+      toast(l.toast_preset_deleted(name));
+    }
+
+    /* ═══════════════════════════ HISTORY ═══════════════════════════ */
+    function getHistory() { return JSON.parse(localStorage.getItem('bingo_history') || '[]'); }
+    function saveHistory() {
+      const h = getHistory();
+      const checkedCount = checked.filter(Boolean).length;
+      h.unshift({
+        date: new Date().toLocaleDateString(currLang === 'zh' ? 'zh-CN' : 'en-US'),
+        score, lines: completedLines.size, checked: checkedCount,
+        items: board.slice()
+      });
+      localStorage.setItem('bingo_history', JSON.stringify(h.slice(0, 30)));
+    }
+
+    function renderHistory() {
+      const h = getHistory();
+      const el = document.getElementById('historyList');
+      const l = LANGS[currLang];
+      if (h.length === 0) {
+        el.innerHTML = `<div class="history-empty">${l.history_empty}</div>`;
+        return;
+      }
+      el.innerHTML = h.map((r, idx) => `
+    <div class="history-item">
+      <div class="hi-date">${r.date}</div>
+      <div class="hi-score">🏆 ${r.score}<span style="font-size:.6rem;color:var(--text-dim)">${l.history_pts}</span></div>
+      <div class="hi-lines">${r.lines}${l.history_lines}</div>
+      <div class="hi-checked">${l.history_checked} ${r.checked}/25</div>
+    </div>
+  `).join('');
+    }
+
+    function clearHistory() {
+      const l = LANGS[currLang];
+      localStorage.removeItem('bingo_history');
+      renderHistory();
+      toast(l.toast_history_cleared);
+    }
+
+    /* ═══════════════════════════ TOAST ═══════════════════════════ */
+    function toast(msg, type = '') {
+      const container = document.getElementById('toastContainer');
+      const t = document.createElement('div');
+      t.className = 'toast' + (type ? ' ' + type : '');
+      t.textContent = msg;
+      container.appendChild(t);
+      setTimeout(() => {
+        t.style.animation = 'slideOut .3s ease forwards';
+        setTimeout(() => t.remove(), 300);
+      }, 2500);
+    }
+
+    /* ═══════════════════════════ CONFETTI ═══════════════════════════ */
+    function triggerConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const particles = Array.from({ length: 160 }, () => ({
+        x: Math.random() * canvas.width,
+        y: -10,
+        r: Math.random() * 6 + 3,
+        vx: (Math.random() - 0.5) * 4,
+        vy: Math.random() * 4 + 2,
+        color: ['#a855f7', '#f59e0b', '#10b981', '#f87171', '#60a5fa', '#fcd34d'][Math.floor(Math.random() * 6)],
+        alpha: 1, rot: Math.random() * 360
+      }));
+      let frame = 0;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const p of particles) {
+          p.x += p.vx; p.y += p.vy; p.alpha -= 0.008; p.rot += 3;
+          if (p.alpha <= 0) continue;
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot * Math.PI / 180);
+          ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r);
+          ctx.restore();
+        }
+        frame++;
+        if (frame < 200) requestAnimationFrame(animate);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      animate();
+    }
+
+    function triggerMiniConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const particles = Array.from({ length: 40 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height * .5,
+        r: Math.random() * 4 + 2,
+        vx: (Math.random() - 0.5) * 3,
+        vy: Math.random() * 3 + 1,
+        color: ['#a855f7', '#f59e0b', '#fcd34d'][Math.floor(Math.random() * 3)],
+        alpha: 1
+      }));
+      let frame = 0;
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const p of particles) {
+          p.x += p.vx; p.y += p.vy; p.alpha -= 0.02;
+          if (p.alpha <= 0) continue;
+          ctx.save();
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.r, p.r);
+          ctx.restore();
+        }
+        frame++;
+        if (frame < 80) requestAnimationFrame(animate);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      animate();
+    }
+
+    /* ═══════════════════════════ START ═══════════════════════════ */
+    init();
+  </script>
+</body>
+
+</html>
