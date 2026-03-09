@@ -717,9 +717,9 @@
           Mode:</span>
         <select id="gridSizeSelect" onchange="changeGridSize(this.value)"
           style="background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); padding: 6px 12px; border-radius: 6px; font-family: inherit; outline: none; cursor: pointer;">
-          <option value="3" data-i18n="mode_3x3">3x3 Grid</option>
+          <option value="3" selected data-i18n="mode_3x3">3x3 Grid</option>
           <option value="4" data-i18n="mode_4x4">4x4 Grid</option>
-          <option value="5" selected data-i18n="mode_5x5">5x5 Grid</option>
+          <option value="5" data-i18n="mode_5x5">5x5 Grid</option>
         </select>
       </div>
 
@@ -898,7 +898,7 @@
     };
 
     let currLang = localStorage.getItem('bingo_lang') || 'en';
-    let gridSize = 5;
+    let gridSize = 3;
     let gameEnded = false;
 
     function toggleLanguage() {
