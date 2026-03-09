@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>生活打卡 Bingo</title>
+  <title>Life Bingo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
     rel="stylesheet" />
@@ -694,59 +694,73 @@
         <button class="btn btn-secondary" onclick="toggleLanguage()" id="langBtn"
           style="font-size: .75rem; padding: 6px 12px;">EN / 中</button>
       </div>
-      <h1 id="ui-title">✦ 生活打卡 Bingo ✦</h1>
-      <p id="ui-subtitle">填入25个目标，随机生成Bingo矩阵，完成挑战赢取积分！</p>
+      <h1 id="ui-title">✦ Life Check-in Bingo ✦</h1>
+      <p id="ui-subtitle">Fill 25 goals, generate a task grid, and finish challenges for points!</p>
     </header>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('setup')" id="tab-setup">⚙ <span
-          data-i18n="nav_setup">设置</span></button>
-      <button class="tab-btn" onclick="switchTab('game')" id="tab-game">🎯 <span data-i18n="nav_game">游戏</span></button>
+          data-i18n="nav_setup">Setup</span></button>
+      <button class="tab-btn" onclick="switchTab('game')" id="tab-game">🎯 <span
+          data-i18n="nav_game">Game</span></button>
       <button class="tab-btn" onclick="switchTab('history')" id="tab-history">📊 <span
-          data-i18n="nav_history">记录</span></button>
+          data-i18n="nav_history">History</span></button>
     </div>
 
     <!-- SETUP PANEL -->
     <div class="panel active" id="panel-setup">
-      <p class="setup-intro" data-i18n="setup_intro">请填入 25 个打卡项目，或从已保存的预设中加载。</p>
+      <p class="setup-intro" data-i18n="setup_intro">Fill in 25 items or load from a saved preset.</p>
+
+      <div class="mode-selector"
+        style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px; background: var(--surface); padding: 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border);">
+        <span style="font-size: .9rem; font-weight: 700; color: var(--text-dim);" data-i18n="setup_grid_size">Grid
+          Mode:</span>
+        <select id="gridSizeSelect" onchange="changeGridSize(this.value)"
+          style="background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); padding: 6px 12px; border-radius: 6px; font-family: inherit; outline: none; cursor: pointer;">
+          <option value="3" data-i18n="mode_3x3">3x3 Grid</option>
+          <option value="4" data-i18n="mode_4x4">4x4 Grid</option>
+          <option value="5" selected data-i18n="mode_5x5">5x5 Grid</option>
+        </select>
+      </div>
 
       <div class="presets-section">
-        <h3 data-i18n="presets_title">📁 已保存预设</h3>
+        <h3 data-i18n="presets_title">📁 Saved Presets</h3>
         <div class="preset-list" id="presetList"></div>
         <div class="preset-save-row">
           <input class="preset-name-input" id="presetNameInput" type="text" data-i18n-placeholder="preset_placeholder"
-            placeholder="输入预设名称…" maxlength="20" />
-          <button class="btn btn-secondary" onclick="savePreset()">💾 <span
-              data-i18n="btn_save_current">保存当前</span></button>
+            placeholder="Enter preset name..." maxlength="20" />
+          <button class="btn btn-secondary" onclick="savePreset()">💾 <span data-i18n="btn_save_current">Save
+              Current</span></button>
         </div>
       </div>
 
       <div class="items-grid" id="itemsGrid"></div>
 
       <div class="setup-actions">
-        <button class="btn btn-primary" onclick="generateBoard()">🎲 <span data-i18n="btn_generate">随机生成 Bingo
-            板</span></button>
-        <button class="btn btn-secondary" onclick="clearItems()">🗑 <span data-i18n="btn_clear">清空</span></button>
-        <button class="btn btn-secondary" onclick="fillDemo()">✨ <span data-i18n="btn_demo">示例填充</span></button>
+        <button class="btn btn-primary" onclick="generateBoard()">🎲 <span data-i18n="btn_generate">Generate Bingo
+            Board</span></button>
+        <button class="btn btn-secondary" onclick="clearItems()">🗑 <span data-i18n="btn_clear">Clear
+            All</span></button>
+        <button class="btn btn-secondary" onclick="fillDemo()">✨ <span data-i18n="btn_demo">Fill Demo</span></button>
       </div>
     </div>
 
     <!-- GAME PANEL -->
     <div class="panel" id="panel-game">
       <div class="game-over-banner" id="gameOverBanner">
-        <h2 data-i18n="game_over_title">🎉 全板完成！BINGO！</h2>
-        <p data-i18n="game_over_msg">恭喜你完成所有打卡项目！游戏最终得分已记录。</p>
+        <h2 data-i18n="game_over_title">🎉 FULL BOARD! BINGO!</h2>
+        <p data-i18n="game_over_msg">Congrats! You finished every single task on the board!</p>
       </div>
       <div class="game-layout">
         <div class="bingo-area">
           <div class="bingo-header">
-            <h2 data-i18n="game_board_title">📋 打卡 Bingo 板</h2>
+            <h2 data-i18n="game_board_title">📋 Bingo Board</h2>
             <button class="btn btn-secondary" onclick="switchTab('setup')" style="font-size:.8rem;padding:7px 12px;"
-              data-i18n="btn_back">← 返回设置</button>
+              data-i18n="btn_back">← Back to Setup</button>
             <button class="btn btn-primary" onclick="endGame()" style="font-size:.8rem;padding:7px 12px;"
-              data-i18n="btn_end">🏁 结束游戏</button>
+              data-i18n="btn_end">🏁 Finish Game</button>
             <button class="btn btn-gold" onclick="resetGame()" style="font-size:.8rem;padding:7px 12px;"
-              data-i18n="btn_reset">🔄 重置</button>
+              data-i18n="btn_reset">🔄 Reset</button>
           </div>
           <div class="progress-bar-wrap">
             <div class="progress-bar" id="progressBar" style="width:0%"></div>
@@ -755,15 +769,15 @@
         </div>
         <div class="score-sidebar">
           <div class="score-card">
-            <h3 data-i18n="score_title">🏆 当前得分</h3>
+            <h3 data-i18n="score_title">🏆 Current Score</h3>
             <div class="score-big" id="scoreDisplay">0</div>
-            <div class="score-sub"><span data-i18n="score_lines">已完成连线：</span><span class="lines-count"
-                id="linesDisplay">0</span> <span data-i18n="unit_lines">条</span></div>
-            <div class="score-sub" style="margin-top:6px"><span data-i18n="score_checked">已打卡：</span><span
+            <div class="score-sub"><span data-i18n="score_lines">Lines Completed: </span><span class="lines-count"
+                id="linesDisplay">0</span> <span data-i18n="unit_lines"></span></div>
+            <div class="score-sub" style="margin-top:6px"><span data-i18n="score_checked">Tasks Finished: </span><span
                 id="checkedDisplay" style="color:var(--accent2);font-weight:700">0</span> / 25</div>
           </div>
           <div class="scoring-rules">
-            <h3 data-i18n="rules_title">📐 计分规则</h3>
+            <h3 data-i18n="rules_title">📐 Scoring Rules</h3>
             <div id="rulesList"></div>
           </div>
         </div>
@@ -774,7 +788,7 @@
     <div class="panel" id="panel-history">
       <div class="history-list" id="historyList"></div>
       <button class="btn btn-secondary clear-history-btn" onclick="clearHistory()" style="margin-top:16px"
-        data-i18n="btn_clear_history">🗑 清空所有记录</button>
+        data-i18n="btn_clear_history">🗑 Clear All History</button>
     </div>
   </div>
 
@@ -795,6 +809,10 @@
         btn_generate: "随机生成 Bingo 板",
         btn_clear: "清空",
         btn_demo: "示例填充",
+        setup_grid_size: "打卡模式：",
+        mode_3x3: "3x3 九宫格",
+        mode_4x4: "4x4 十六宫格",
+        mode_5x5: "5x5 二十五宫格",
         game_over_title: "🎉 全板完成！BINGO！",
         game_over_msg: "恭喜你完成所有打卡项目！游戏最终得分已记录。",
         game_board_title: "📋 打卡 Bingo 板",
@@ -807,10 +825,10 @@
         score_checked: "已打卡：",
         rules_title: "📐 计分规则",
         btn_clear_history: "清空所有记录",
-        rule_line: "条连线",
-        rule_full: "12条连线（全满）",
-        rule_half_bonus: "打卡≥13格（奖励）",
-        rule_all_bonus: "25格全部打卡",
+        rule_each_item: "每项打卡：",
+        rule_each_line: "每条连线：",
+        rule_full_bonus: "全板完成额外奖励：",
+        rule_pts_format: (pts) => `+${pts}分`,
         toast_need_more: (n) => `还差 ${n} 个项目！`,
         toast_generated: "🎲 新的 Bingo 板已生成！",
         toast_reset: "🔄 游戏已重置！",
@@ -853,10 +871,10 @@
         score_checked: "Tasks Finished: ",
         rules_title: "📐 Scoring Rules",
         btn_clear_history: "Clear All History",
-        rule_line: " Lines",
-        rule_full: "12 Lines (Full Board)",
-        rule_half_bonus: "Tasks ≥ 13 (Bonus)",
-        rule_all_bonus: "All 25 Tasks Done",
+        rule_each_item: "Each Task: ",
+        rule_each_line: "Each Line: ",
+        rule_full_bonus: "Full Board Bonus: ",
+        rule_pts_format: (pts) => `+${pts} pts`,
         toast_need_more: (n) => `Need ${n} more items!`,
         toast_generated: "🎲 New Bingo board generated!",
         toast_reset: "🔄 Game reset!",
@@ -872,15 +890,27 @@
         history_lines: " lines",
         history_checked: "Checked",
         input_placeholder: "Goal Item",
+        setup_grid_size: "Grid Mode:",
+        mode_3x3: "3x3 Grid",
+        mode_4x4: "4x4 Grid",
+        mode_5x5: "5x5 Grid",
       }
     };
 
-    let currLang = localStorage.getItem('bingo_lang') || 'zh';
+    let currLang = localStorage.getItem('bingo_lang') || 'en';
+    let gridSize = 5;
+    let gameEnded = false;
 
     function toggleLanguage() {
       currLang = currLang === 'zh' ? 'en' : 'zh';
       localStorage.setItem('bingo_lang', currLang);
       applyLanguage();
+    }
+
+    function changeGridSize(val) {
+      gridSize = parseInt(val);
+      buildItemInputs();
+      renderRules(); // Rules change based on size
     }
 
     function applyLanguage() {
@@ -899,13 +929,23 @@
         if (l[key]) el.placeholder = l[key];
       });
 
+      // Update grid size select options if they are rendered
+      const select = document.getElementById('gridSizeSelect');
+      if (select) {
+        Array.from(select.options).forEach(opt => {
+          const key = opt.getAttribute('data-i18n');
+          if (l[key]) opt.textContent = l[key];
+        });
+      }
+
       // Re-render dynamic parts
       renderRules();
       renderPresets();
       renderHistory();
 
       // Update input placeholders
-      for (let i = 0; i < 25; i++) {
+      const total = gridSize * gridSize;
+      for (let i = 0; i < total; i++) {
         const inp = document.getElementById('item-' + i);
         if (inp) inp.placeholder = `${l.input_placeholder} ${i + 1}`;
       }
@@ -931,8 +971,8 @@
     const BONUS_ALL = 2000;    // all 25 checked
     const BONUS_HALF = 200;    // 13+ checked
 
-    let board = [];      // array of 25 strings
-    let checked = [];    // bool[25]
+    let board = [];      // array of N*N strings
+    let checked = [];    // bool[N*N]
     let score = 0;
     let completedLines = new Set();   // set of line-ids
     let prevLineCount = 0;
@@ -955,7 +995,8 @@
       const grid = document.getElementById('itemsGrid');
       grid.innerHTML = '';
       const l = LANGS[currLang];
-      for (let i = 0; i < 25; i++) {
+      const total = gridSize * gridSize;
+      for (let i = 0; i < total; i++) {
         const wrap = document.createElement('div');
         wrap.className = 'item-input-wrap';
         wrap.innerHTML = `<span class="item-num">${i + 1}</span>
@@ -967,16 +1008,16 @@
     function renderRules() {
       const el = document.getElementById('rulesList');
       const l = LANGS[currLang];
+
+      const linePts = gridSize === 3 ? 30 : (gridSize === 4 ? 40 : 50);
+      const fullBonus = gridSize === 3 ? 170 : (gridSize === 4 ? 340 : 650);
+
       const rows = [
-        { label: `1${l.rule_line}`, pts: formatPts(1) },
-        { label: `2${l.rule_line}`, pts: formatPts(2) },
-        { label: `3${l.rule_line}`, pts: formatPts(3) },
-        { label: `5${l.rule_line}`, pts: formatPts(5) },
-        { label: `8${l.rule_line}`, pts: formatPts(8) },
-        { label: l.rule_full, pts: formatPts(12) },
-        { label: l.rule_half_bonus, pts: `+${BONUS_HALF}` },
-        { label: l.rule_all_bonus, pts: `+${BONUS_ALL}` },
+        { label: l.rule_each_item, pts: l.rule_pts_format(10) },
+        { label: l.rule_each_line, pts: l.rule_pts_format(linePts) },
+        { label: l.rule_full_bonus, pts: l.rule_pts_format(fullBonus) }
       ];
+
       el.innerHTML = rows.map(r => `
     <div class="rule-row">
       <span class="rule-label">${r.label}</span>
@@ -1006,12 +1047,15 @@
 
     /* ═══════════════════════════ SETUP ═══════════════════════════ */
     function getItems() {
-      return Array.from({ length: 25 }, (_, i) => document.getElementById('item-' + i).value.trim());
+      const total = gridSize * gridSize;
+      return Array.from({ length: total }, (_, i) => document.getElementById('item-' + i).value.trim());
     }
 
     function setItems(arr) {
-      for (let i = 0; i < 25; i++) {
-        document.getElementById('item-' + i).value = arr[i] || '';
+      const total = gridSize * gridSize;
+      for (let i = 0; i < total; i++) {
+        const inp = document.getElementById('item-' + i);
+        if (inp) inp.value = arr[i] || '';
       }
     }
 
@@ -1023,15 +1067,17 @@
       const items = getItems();
       const filled = items.filter(x => x.length > 0);
       const l = LANGS[currLang];
-      if (filled.length < 25) {
-        toast(l.toast_need_more(25 - filled.length), 'warn');
+      const total = gridSize * gridSize;
+      if (filled.length < total) {
+        toast(l.toast_need_more(total - filled.length), 'warn');
         return;
       }
       // shuffle
       const shuffled = [...items].sort(() => Math.random() - .5);
       board = shuffled;
-      checked = Array(25).fill(false);
+      checked = Array(total).fill(false);
       score = 0;
+      gameEnded = false;
       completedLines = new Set();
       prevLineCount = 0;
       renderBingoGrid();
@@ -1044,8 +1090,10 @@
     function resetGame() {
       const l = LANGS[currLang];
       if (board.length === 0) { toast(l.toast_no_game); return; }
-      checked = Array(25).fill(false);
+      const total = gridSize * gridSize;
+      checked = Array(total).fill(false);
       score = 0;
+      gameEnded = false;
       completedLines = new Set();
       prevLineCount = 0;
       renderBingoGrid();
@@ -1058,7 +1106,9 @@
     function renderBingoGrid() {
       const grid = document.getElementById('bingoGrid');
       grid.innerHTML = '';
-      for (let i = 0; i < 25; i++) {
+      grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+      const total = gridSize * gridSize;
+      for (let i = 0; i < total; i++) {
         const cell = document.createElement('div');
         cell.className = 'bingo-cell';
         cell.id = 'cell-' + i;
@@ -1071,6 +1121,7 @@
     }
 
     function toggleCell(i) {
+      if (gameEnded) return;
       checked[i] = !checked[i];
       const cell = document.getElementById('cell-' + i);
       cell.classList.toggle('checked', checked[i]);
@@ -1080,10 +1131,28 @@
     /* ═══════════════════════════ SCORING ═══════════════════════════ */
     function getLines() {
       const lines = [];
-      for (let r = 0; r < 5; r++) lines.push([r * 5, r * 5 + 1, r * 5 + 2, r * 5 + 3, r * 5 + 4]);
-      for (let c = 0; c < 5; c++) lines.push([c, c + 5, c + 10, c + 15, c + 20]);
-      lines.push([0, 6, 12, 18, 24]);
-      lines.push([4, 8, 12, 16, 20]);
+      const size = gridSize;
+      // Rows
+      for (let r = 0; r < size; r++) {
+        const row = [];
+        for (let c = 0; c < size; c++) row.push(r * size + c);
+        lines.push(row);
+      }
+      // Cols
+      for (let c = 0; c < size; c++) {
+        const col = [];
+        for (let r = 0; r < size; r++) col.push(r * size + c);
+        lines.push(col);
+      }
+      // Diagonals
+      const d1 = [];
+      const d2 = [];
+      for (let i = 0; i < size; i++) {
+        d1.push(i * size + i);
+        d2.push(i * size + (size - 1 - i));
+      }
+      lines.push(d1);
+      lines.push(d2);
       return lines;
     }
 
@@ -1094,37 +1163,35 @@
       const newlyWon = [];
       const l = LANGS[currLang];
 
-      let currentWinLines = new Set();
+      // Refresh won lines from scratch to handle unchecking
+      const currentWinLines = new Set();
       for (const line of lines) {
         if (line.every(i => checked[i])) {
           const id = lineId(line);
           currentWinLines.add(id);
           if (!completedLines.has(id)) {
-            completedLines.add(id);
             newlyWon.push(line);
           }
         }
       }
+      completedLines = currentWinLines;
 
       const lineCount = completedLines.size;
-      let linePts = 0;
-      for (let i = 1; i <= lineCount; i++) {
-        const s = SCORING.find(x => x.lines === i);
-        if (s) linePts += s.pts;
-      }
-
       const checkedCount = checked.filter(Boolean).length;
-      let bonus = 0;
-      if (checkedCount >= 13) bonus += BONUS_HALF;
-      if (checkedCount === 25) bonus += BONUS_ALL;
 
-      score = linePts + bonus;
+      const lineBonus = gridSize === 3 ? 30 : (gridSize === 4 ? 40 : 50);
+      const fullBonusAmount = gridSize === 3 ? 170 : (gridSize === 4 ? 340 : 650);
+
+      const total = gridSize * gridSize;
+      let bonus = (checkedCount === total) ? fullBonusAmount : 0;
+
+      score = (checkedCount * 10) + (lineCount * lineBonus) + bonus;
 
       if (newlyWon.length > 0) {
         for (const line of newlyWon) {
-          const pts = SCORING.find(x => x.lines === lineCount)?.pts || 0;
-          toast(l.toast_line_win(pts), 'gold');
-          if (lineCount === 12) triggerConfetti();
+          toast(l.toast_line_win(lineBonus), 'gold');
+          const maxLines = gridSize === 3 ? 8 : (gridSize === 4 ? 10 : 12);
+          if (lineCount === maxLines) triggerConfetti();
           else triggerMiniConfetti();
         }
       }
@@ -1134,11 +1201,14 @@
       document.getElementById('linesDisplay').textContent = lineCount;
       document.getElementById('checkedDisplay').textContent = checkedCount;
 
-      const pct = ((checkedCount) / 25) * 100;
+      document.getElementById('checkedDisplay').nextSibling.textContent = ` / ${total}`;
+      const pct = (checkedCount / total) * 100;
       document.getElementById('progressBar').style.width = pct + '%';
 
-      if (checkedCount === 25) {
+      if (checkedCount === total) {
         document.getElementById('gameOverBanner').classList.add('show');
+      } else {
+        document.getElementById('gameOverBanner').classList.remove('show');
       }
 
       prevLineCount = lineCount;
@@ -1147,6 +1217,7 @@
     function endGame() {
       const l = LANGS[currLang];
       if (board.length === 0) { toast(l.toast_no_game); return; }
+      gameEnded = true;
       saveHistory();
       toast(l.toast_game_ended, 'green');
       switchTab('history');
@@ -1228,6 +1299,7 @@
       h.unshift({
         date: new Date().toLocaleDateString(currLang === 'zh' ? 'zh-CN' : 'en-US'),
         score, lines: completedLines.size, checked: checkedCount,
+        gridSize: gridSize,
         items: board.slice()
       });
       localStorage.setItem('bingo_history', JSON.stringify(h.slice(0, 30)));
@@ -1241,14 +1313,18 @@
         el.innerHTML = `<div class="history-empty">${l.history_empty}</div>`;
         return;
       }
-      el.innerHTML = h.map((r, idx) => `
+      el.innerHTML = h.map((r, idx) => {
+        const sizeTag = r.gridSize ? `${r.gridSize}x${r.gridSize}` : '5x5';
+        const total = r.gridSize ? r.gridSize * r.gridSize : 25;
+        return `
     <div class="history-item">
-      <div class="hi-date">${r.date}</div>
+      <div class="hi-date">${r.date} <span style="font-size: .7rem; background: var(--surface2); padding: 2px 6px; border-radius: 4px; color: var(--accent2); margin-left: 4px;">${sizeTag}</span></div>
       <div class="hi-score">🏆 ${r.score}<span style="font-size:.6rem;color:var(--text-dim)">${l.history_pts}</span></div>
       <div class="hi-lines">${r.lines}${l.history_lines}</div>
-      <div class="hi-checked">${l.history_checked} ${r.checked}/25</div>
+      <div class="hi-checked">${l.history_checked} ${r.checked}/${total}</div>
     </div>
-  `).join('');
+  `;
+      }).join('');
     }
 
     function clearHistory() {
