@@ -1,0 +1,355 @@
+/* ============================================================
+   CP粉成分测试 · Styles
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:         #F5F4EF;
+  --card:       #FFFFFF;
+  --text:       #1A1A1A;
+  --text-muted: #888888;
+  --accent:     #2D3A8C;
+  --accent-dim: #e8eaf6;
+  --radius:     20px;
+  --shadow:     0 8px 32px rgba(0, 0, 0, 0.08);
+  --transition: 0.25s ease;
+}
+
+html, body {
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Noto Sans SC', -apple-system, 'PingFang SC',
+               'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 32px 16px 64px;
+}
+
+#app {
+  width: 100%;
+  max-width: 520px;
+}
+
+/* ── Screens ─────────────────────────────────────────────── */
+
+.screen { display: none; }
+.screen.active { display: block; animation: rise 0.35s ease; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── Card ────────────────────────────────────────────────── */
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 36px 28px;
+}
+
+/* ── Start screen ────────────────────────────────────────── */
+
+.start-card {
+  text-align: center;
+  padding: 56px 32px 48px;
+}
+
+.start-badge {
+  display: inline-block;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  padding: 4px 14px;
+  border-radius: 99px;
+  margin-bottom: 24px;
+}
+
+.start-title {
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--accent);
+  margin-bottom: 16px;
+  letter-spacing: 0.02em;
+}
+
+.start-sub {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.start-meta {
+  font-size: 0.85rem;
+  color: #bbb;
+  margin-bottom: 40px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+
+.btn {
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 14px 36px;
+  border-radius: 99px;
+  letter-spacing: 0.05em;
+  transition: transform var(--transition), box-shadow var(--transition),
+              background var(--transition);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: #1e2a7a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(45,58,140,0.28);
+}
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: transparent;
+  color: inherit;
+  border: 2px solid currentColor;
+  opacity: 0.65;
+  margin-top: 28px;
+}
+.btn-ghost:hover { opacity: 1; transform: translateY(-1px); }
+
+/* ── Progress ────────────────────────────────────────────── */
+
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 4px;
+  background: #e0ddd5;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.progress-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ── Question card ───────────────────────────────────────── */
+
+.question-card { padding: 32px 26px; }
+
+.question-id {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #ccc;
+  margin-bottom: 12px;
+}
+
+.question-text {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  color: var(--text);
+}
+
+/* ── Options ─────────────────────────────────────────────── */
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: #f7f6f2;
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  color: var(--text);
+  transition: background var(--transition), border-color var(--transition),
+              transform var(--transition);
+  line-height: 1.5;
+}
+
+.option-btn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  transform: translateX(5px);
+}
+
+.option-btn:active { transform: translateX(3px) scale(0.99); }
+
+.option-btn.selected {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.opt-label {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 900;
+  transition: background var(--transition);
+}
+
+.option-btn.selected .opt-label {
+  background: rgba(255,255,255,0.3);
+}
+
+.opt-text { flex: 1; }
+
+/* ── Result card ─────────────────────────────────────────── */
+
+.result-card {
+  text-align: center;
+  padding: 52px 32px 44px;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+.result-code {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  opacity: 0.5;
+  margin-bottom: 10px;
+}
+
+.result-cn {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin-bottom: 24px;
+}
+
+.result-img-wrap {
+  margin: 0 auto 24px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.result-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 16px;
+  display: block;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.result-divider {
+  width: 40px;
+  height: 3px;
+  background: currentColor;
+  opacity: 0.3;
+  margin: 0 auto 24px;
+  border-radius: 2px;
+}
+
+.result-desc {
+  font-size: 0.95rem;
+  line-height: 1.9;
+  white-space: pre-line;
+  opacity: 0.8;
+  margin-bottom: 28px;
+}
+
+/* ── Score breakdown (debug/fun) ─────────────────────────── */
+
+.result-scores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.score-dim {
+  background: rgba(255,255,255,0.2);
+  border-radius: 12px;
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.score-dim-name {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+
+.score-dim-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.score-bar-wrap {
+  height: 4px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  background: currentColor;
+  opacity: 0.6;
+  border-radius: 2px;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 400px) {
+  .start-title { font-size: 2rem; }
+  .card { padding: 28px 20px; }
+  .result-cn { font-size: 2rem; }
+}
