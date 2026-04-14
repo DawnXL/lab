@@ -11,6 +11,10 @@
 // 计分方法：中位数基准判定法
 //   θ = (P_max − N_max) / 2
 //   net = p − n，若 net > θ 则正极，否则负极
+//
+// 特殊逻辑：Q21（special:true）
+//   选 D「完全不认同」→ 直接跳转 SMYC 隐藏人格
+//   其余选项          → 正常结算 Q1–Q20 得分
 // ============================================================
 
 'use strict';
@@ -70,12 +74,28 @@ function buildCode(scores, maxScores) {
   return B + C + A + D;
 }
 
+// ── Fisher-Yates shuffle（返回新数组，不修改原数组）────────
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 // ── Quiz state ────────────────────────────────────────────
 let state = {};
 
 function resetState() {
+  // Q21（special）固定压在末尾；其余题目随机混排
+  const normal  = QUESTIONS.filter(q => !q.special);
+  const special = QUESTIONS.filter(q =>  q.special);
   state = {
-    index: 0,
+    index:    0,
+    queue:    [...shuffle(normal), ...special],
+    history:  [],   // 每答一题 push 该选项的 tags 副本，用于返回上一题时逆向扣分
+    nickname: ($('nickname-input').value || '').trim(),
     scores: {
       A: { pos: 0, neg: 0 },
       B: { pos: 0, neg: 0 },
@@ -95,14 +115,17 @@ function showScreen(id) {
 
 // ── Render current question ───────────────────────────────
 function renderQuestion() {
-  const q     = QUESTIONS[state.index];
-  const total = QUESTIONS.length;
+  const q     = state.queue[state.index];
+  const total = state.queue.length;
   const pct   = (state.index / total) * 100;
 
-  $('progress-fill').style.width = pct + '%';
+  $('progress-fill').style.width  = pct + '%';
   $('progress-label').textContent = `${state.index + 1} / ${total}`;
-  $('question-id').textContent    = q.id;
+  $('question-id').textContent    = 'Q' + (state.index + 1);  // 始终顺序显示
   $('question-text').textContent  = q.text;
+
+  // 返回按钮：第一题隐藏
+  $('btn-back').style.display = state.index > 0 ? '' : 'none';
 
   const list = $('options-list');
   list.innerHTML = '';
@@ -127,7 +150,20 @@ function handleAnswer(opt, btn) {
   });
   btn.classList.add('selected');
 
-  // Accumulate scores
+  const q = state.queue[state.index];
+
+  // ── Q21 特殊跳转：选 D「完全不认同」→ 直接进入隐藏人格 SMYC
+  if (q.special && opt.label === 'D') {
+    setTimeout(() => {
+      renderResult('SMYC', RESULTS['SMYC']);
+    }, 320);
+    return;
+  }
+
+  // 记录本题答案（用于返回时逆向扣分）
+  state.history.push(opt.tags.slice());
+
+  // Accumulate scores（special题其余选项 tags 为空，自然跳过）
   for (const tag of opt.tags) {
     const m = TAG_MAP[tag];
     if (!m) continue;
@@ -138,7 +174,7 @@ function handleAnswer(opt, btn) {
   // Short delay for visual feedback, then advance
   setTimeout(() => {
     state.index++;
-    if (state.index >= QUESTIONS.length) {
+    if (state.index >= state.queue.length) {
       showResult();
     } else {
       renderQuestion();
@@ -146,40 +182,84 @@ function handleAnswer(opt, btn) {
   }, 320);
 }
 
-// ── Show result ───────────────────────────────────────────
-function showResult() {
-  const maxScores = calcMaxScores(QUESTIONS);
-  const code      = buildCode(state.scores, maxScores);
-  const result    = RESULTS[code] || {
-    cn:    code,
-    desc:  '（结果描述待填充）',
-    color: '#888888',
-    text:  '#ffffff',
-  };
+// ── Handle back button ────────────────────────────────────
+function handleBack() {
+  if (state.index === 0) return;
 
+  // 逆向扣除上一题的得分
+  const lastTags = state.history.pop();
+  for (const tag of lastTags) {
+    const m = TAG_MAP[tag];
+    if (!m) continue;
+    if (m.sign > 0) state.scores[m.dim].pos--;
+    else            state.scores[m.dim].neg--;
+  }
+
+  state.index--;
+  renderQuestion();
+}
+
+// ── Render result card ────────────────────────────────────
+function renderResult(code, result) {
   // Theme the card
   const card = $('result-card');
   card.style.backgroundColor = result.color;
   card.style.color            = result.text;
 
+  // 昵称行
+  const nickEl = $('result-nickname');
+  if (state.nickname) {
+    nickEl.textContent   = state.nickname + ' 的 CXTI 是：';
+    nickEl.style.display = '';
+  } else {
+    nickEl.textContent   = '';
+    nickEl.style.display = 'none';
+  }
+
   $('result-code').textContent = code;
+
+  // 人格名称（有则显示，无则隐藏）
+  const nameEl = $('result-name');
+  if (result.name) {
+    nameEl.textContent   = result.name;
+    nameEl.style.display = '';
+  } else {
+    nameEl.textContent   = '';
+    nameEl.style.display = 'none';
+  }
+
   $('result-cn').textContent   = result.cn;
   $('result-desc').textContent = result.desc;
 
   // Illustration
   const imgWrap = $('result-img-wrap');
   if (result.img) {
-    imgWrap.innerHTML = `<img src="${result.img}" alt="${result.cn}" class="result-img" />`;
+    imgWrap.innerHTML    = `<img src="${result.img}" alt="${result.name || result.cn}" class="result-img" />`;
     imgWrap.style.display = 'block';
   } else {
-    imgWrap.innerHTML = '';
+    imgWrap.innerHTML    = '';
     imgWrap.style.display = 'none';
   }
 
   // Score breakdown
-  renderScoreBreakdown(maxScores, result.text);
+  const maxScores = calcMaxScores(QUESTIONS);
+  renderScoreBreakdown(maxScores);
 
   showScreen('screen-result');
+}
+
+// ── Show result（正常结算路径）────────────────────────────
+function showResult() {
+  const maxScores = calcMaxScores(QUESTIONS);
+  const code      = buildCode(state.scores, maxScores);
+  const result    = RESULTS[code] || {
+    cn:    code,
+    name:  '',
+    desc:  '（结果描述待填充）',
+    color: '#888888',
+    text:  '#ffffff',
+  };
+  renderResult(code, result);
 }
 
 // ── Score breakdown UI ────────────────────────────────────
@@ -227,8 +307,22 @@ function init() {
     showScreen('screen-question');
   });
 
+  $('btn-back').addEventListener('click', handleBack);
+
   $('btn-retry').addEventListener('click', () => {
     showScreen('screen-start');
+  });
+
+  // 保存图片（html2canvas）
+  $('btn-save').addEventListener('click', () => {
+    const card = $('result-card');
+    html2canvas(card, { scale: 2, useCORS: true }).then(canvas => {
+      const link     = document.createElement('a');
+      const filename = state.nickname ? `CXTI_${state.nickname}` : 'CXTI结果';
+      link.download  = filename + '.png';
+      link.href      = canvas.toDataURL('image/png');
+      link.click();
+    });
   });
 }
 
