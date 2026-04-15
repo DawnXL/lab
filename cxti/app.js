@@ -6,13 +6,13 @@
 
 // ── Tag → dimension mapping ───────────────────────────────
 const TAG_MAP = {
-  '正义': { dim: 'B', sign:  1 },
+  '正义': { dim: 'B', sign: 1 },
   '邪恶': { dim: 'B', sign: -1 },
-  '守序': { dim: 'A', sign:  1 },
+  '守序': { dim: 'A', sign: 1 },
   '混乱': { dim: 'A', sign: -1 },
-  '淡然': { dim: 'C', sign:  1 },
+  '淡然': { dim: 'C', sign: 1 },
   '浓烈': { dim: 'C', sign: -1 },
-  '素食': { dim: 'D', sign:  1 },
+  '素食': { dim: 'D', sign: 1 },
   '荤食': { dim: 'D', sign: -1 },
   '肉食': { dim: 'D', sign: -1 }, // Alias
 };
@@ -33,7 +33,7 @@ let state = {
   feedback: {},     // { questionId: "feedback text" } (E option)
   likes: {},        // { questionId: true }
   dislikes: {},     // { questionId: true }
-  overallRating: '', 
+  overallRating: '',
   resultCode: '',
   scores: {
     A: { pos: 0, neg: 0 },
@@ -89,7 +89,7 @@ const showScreen = (id) => {
 function resetState() {
   const normal = QUESTIONS.filter(q => !q.special);
   const special = QUESTIONS.filter(q => q.special);
-  
+
   let rawNick = $('nickname-input').value.trim();
   state = {
     index: 0,
@@ -110,28 +110,28 @@ function resetState() {
 function renderQuestion() {
   const q = state.queue[state.index];
   const total = state.queue.length;
-  
+
   // Progress
   const pct = (state.index / total) * 100;
   $('progress-fill').style.width = pct + '%';
   $('progress-label').textContent = `${state.index + 1} / ${total}`;
-  
+
   $('question-id').textContent = 'Q' + (state.index + 1);
   $('question-text').textContent = q.text;
-  
+
   // Header Feedback Icons
   $('btn-q-like').classList.toggle('active', !!state.likes[q.id]);
   $('btn-q-dislike').classList.toggle('active', !!state.dislikes[q.id]);
 
   // Back button visibility
   $('btn-prev').style.display = state.index === 0 ? 'none' : 'flex';
-  
+
   // Reset Feedback UI (E option)
   $('btn-e-option').classList.remove('active');
   $('e-feedback-area').classList.remove('active');
   $('e-feedback-input').value = state.feedback[q.id] || '';
   $('btn-e-submit').classList.remove('selected', 'shake');
-  
+
   // Render options
   const list = $('options-list');
   list.innerHTML = '';
@@ -139,10 +139,13 @@ function renderQuestion() {
     const btn = document.createElement('button');
     btn.className = 'option-btn';
     btn.innerHTML = `<span class="opt-label">${opt.label}</span><span>${opt.text}</span>`;
-    
+
     // Highlight immediately on press
-    btn.onpointerdown = () => btn.classList.add('selected');
-    
+    btn.onpointerdown = () => {
+      list.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    };
+
     // Advance on release
     btn.onclick = () => handleAnswer(opt, btn);
     list.appendChild(btn);
@@ -151,10 +154,10 @@ function renderQuestion() {
 
 function handleAnswer(opt, btn) {
   const q = state.queue[state.index];
-  
+
   // Highlight effect
   btn.classList.add('selected');
-  
+
   // Clear E-feedback state
   $('btn-e-option').classList.remove('active');
   $('e-feedback-area').classList.remove('active');
@@ -183,7 +186,7 @@ function handleAnswer(opt, btn) {
 function handleEFeedback(btn) {
   const q = state.queue[state.index];
   const feedbackText = $('e-feedback-input').value.trim();
-  
+
   if (btn) btn.classList.add('selected');
 
   setTimeout(() => {
@@ -218,7 +221,7 @@ function advance() {
 function handlePrev() {
   if (state.index === 0) return;
   state.index--;
-  
+
   const last = state.history.pop();
   if (last && !last.isFeedbackSkipped) {
     // Reverse scores
@@ -230,7 +233,7 @@ function handlePrev() {
       }
     });
   }
-  
+
   // Do NOT remove feedback/likes/dislikes on prev to allow correction
   renderQuestion();
 }
@@ -239,7 +242,7 @@ function handlePrev() {
 
 function showResult() {
   const maxScores = calcMaxScores(QUESTIONS);
-  
+
   // Building Code (B C A D order)
   const codeB = classifyDim(state.scores.B, maxScores.B) ? 'Z' : 'E';
   const codeC = classifyDim(state.scores.C, maxScores.C) ? 'D' : 'N';
@@ -247,7 +250,7 @@ function showResult() {
   const codeD = classifyDim(state.scores.D, maxScores.D) ? 'S' : 'H';
   const code = codeB + codeC + codeA + codeD;
   state.resultCode = code;
-  
+
   const result = RESULTS[code] || { cn: code, name: code, archetype: '未知', desc: '暂无描述', color: '#888', text: '#fff' };
   renderResult(code, result);
 }
@@ -256,12 +259,12 @@ function renderResult(code, result) {
   const card = $('result-card');
   card.style.backgroundColor = result.color;
   card.style.color = result.text;
-  
+
   $('result-nickname').textContent = state.nickname;
-  $('result-name').textContent = result.name || result.cn; 
+  $('result-name').textContent = result.name || result.cn;
   $('result-cn').textContent = result.cn;
   $('result-code').textContent = code;
-  
+
   const imgWrap = $('result-img-wrap');
   if (result.img) {
     imgWrap.innerHTML = `<img src="${result.img}" alt="${result.name}" class="result-img">`;
@@ -269,13 +272,13 @@ function renderResult(code, result) {
   } else {
     imgWrap.style.display = 'none';
   }
-  
+
   $('result-desc').textContent = result.desc;
-  
+
   // Archetype (Centered)
   const isSMYC = (code === 'SMYC');
   const arcName = result.archetype;
-  
+
   if (isSMYC) {
     // Hidden Identity Rendering
     $('archetype-section').querySelector('.archetype-prefix').textContent = '';
@@ -291,7 +294,7 @@ function renderResult(code, result) {
     if (arc) {
       $('archetype-section').querySelector('.archetype-prefix').textContent = '你属于四大类型中的：';
       $('archetype-tag').textContent = `${arcName} · ${arc.title}`;
-      $('archetype-title').style.display = 'none'; 
+      $('archetype-title').style.display = 'none';
       $('archetype-desc').textContent = arc.desc;
       $('btn-expand-arc').textContent = '查看其他三大型';
       $('archetype-section').style.display = 'block';
@@ -303,29 +306,29 @@ function renderResult(code, result) {
   // Expansion list logic
   const otherArcsWrap = $('other-arcs-wrap');
   otherArcsWrap.style.display = 'none';
-  
+
   otherArcsWrap.innerHTML = '';
   Object.keys(ARCHETYPES).forEach(key => {
-      // If SMYC, show all four; If normal, show other three
-      if (!key.startsWith('@') && (isSMYC || key !== arcName)) {
-          const data = ARCHETYPES[key];
-          const item = document.createElement('div');
-          item.className = 'other-arc-item';
-          item.innerHTML = `
+    // If SMYC, show all four; If normal, show other three
+    if (!key.startsWith('@') && (isSMYC || key !== arcName)) {
+      const data = ARCHETYPES[key];
+      const item = document.createElement('div');
+      item.className = 'other-arc-item';
+      item.innerHTML = `
               <span class="other-arc-tag">${key} · ${data.title}</span>
               <p class="other-arc-desc">${data.desc}</p>
           `;
-          otherArcsWrap.appendChild(item);
-      }
+      otherArcsWrap.appendChild(item);
+    }
   });
-  
+
   // Reset rating selection
   state.overallRating = '';
   document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
 
   // Dimensions
   renderDimensionBars();
-  
+
   showScreen('screen-result');
 }
 
@@ -333,26 +336,26 @@ function renderDimensionBars() {
   const maxScores = calcMaxScores(QUESTIONS);
   const wrap = $('dims-wrap');
   wrap.innerHTML = '';
-  
+
   const order = ['B', 'A', 'C', 'D'];
-  
+
   order.forEach(dimKey => {
     const dim = DIM_LABELS[dimKey];
     const s = state.scores[dimKey];
     const max = maxScores[dimKey];
-    
+
     const isPos = classifyDim(s, max);
     const pRate = max.pos > 0 ? (s.pos / max.pos) : 0;
     const nRate = max.neg > 0 ? (s.neg / max.neg) : 0;
     const totalRate = pRate + nRate;
-    const barPct = totalRate > 0 ? (nRate / totalRate) * 100 : 50; 
-    
+    const barPct = totalRate > 0 ? (nRate / totalRate) * 100 : 50;
+
     const item = document.createElement('div');
     item.className = 'dim-item';
-    const fillStyle = isPos 
-        ? `width: ${100 - barPct}%; left: 0;` 
-        : `width: ${barPct}%; right: 0;`;
-        
+    const fillStyle = isPos
+      ? `width: ${100 - barPct}%; left: 0;`
+      : `width: ${barPct}%; right: 0;`;
+
     item.innerHTML = `
       <div class="dim-bar-header">
         <span class="dim-label ${isPos ? 'active' : ''}">${dim.pos}</span>
@@ -372,23 +375,23 @@ function renderDimensionBars() {
 function copyFeedback() {
   const ratingText = state.overallRating || "(未评)";
   let text = `${state.resultCode} ${ratingText}\n`;
-  
-  const liked = Object.keys(state.likes).filter(k => state.likes[k]).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
-  const disliked = Object.keys(state.dislikes).filter(k => state.dislikes[k]).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
-  const answers = Object.keys(state.feedback).filter(k => state.feedback[k]).sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+
+  const liked = Object.keys(state.likes).filter(k => state.likes[k]).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
+  const disliked = Object.keys(state.dislikes).filter(k => state.dislikes[k]).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
+  const answers = Object.keys(state.feedback).filter(k => state.feedback[k]).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
 
   text += `喜欢的题：${liked.length > 0 ? liked.join(',') : '无'}\n`;
   text += `不喜欢的题：${disliked.length > 0 ? disliked.join(',') : '无'}\n`;
-  
+
   if (answers.length > 0) {
-      text += `其他答案：\n`;
-      answers.forEach(qid => {
-          text += `${qid}: ${state.feedback[qid]}\n`;
-      });
+    text += `其他答案：\n`;
+    answers.forEach(qid => {
+      text += `${qid}: ${state.feedback[qid]}\n`;
+    });
   } else {
-      text += `其他答案：无\n`;
+    text += `其他答案：无\n`;
   }
-  
+
   navigator.clipboard.writeText(text).then(() => {
     const toast = $('toast');
     toast.classList.add('active');
@@ -399,12 +402,12 @@ function copyFeedback() {
 // ── Init ──────────────────────────────────────────────────
 
 function init() {
-  $('q-stats').textContent = `20题，4大维度，17种结果（含一种隐藏人格）`;
+  $('q-stats').textContent = `20题，4大维度，17种结果（含1种隐藏人格）`;
 
   $('btn-start').onclick = () => {
     showScreen('screen-instructions');
   };
-  
+
   $('btn-agree-start').onclick = () => {
     resetState();
     renderQuestion();
@@ -421,60 +424,60 @@ function init() {
 
   // E Feedback Toggle
   $('btn-e-option').onclick = () => {
-      const isActive = $('btn-e-option').classList.toggle('active');
-      $('e-feedback-area').classList.toggle('active', isActive);
-      if (isActive) {
-          $('options-list').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-          $('e-feedback-input').focus();
-      }
+    const isActive = $('btn-e-option').classList.toggle('active');
+    $('e-feedback-area').classList.toggle('active', isActive);
+    if (isActive) {
+      $('options-list').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      $('e-feedback-input').focus();
+    }
   };
 
   $('btn-e-submit').onclick = () => {
     const val = $('e-feedback-input').value.trim();
     if (val.length === 0) {
-        const btn = $('btn-e-submit');
-        btn.classList.add('shake');
-        setTimeout(() => btn.classList.remove('shake'), 400);
-        return;
+      const btn = $('btn-e-submit');
+      btn.classList.add('shake');
+      setTimeout(() => btn.classList.remove('shake'), 400);
+      return;
     }
     handleEFeedback($('btn-e-submit'));
   };
 
   // Archetype expand toggle
   $('btn-expand-arc').onclick = () => {
-      const wrap = $('other-arcs-wrap');
-      const isHidden = wrap.style.display === 'none';
-      wrap.style.display = isHidden ? 'block' : 'none';
-      $('btn-expand-arc').textContent = isHidden ? '收起' : '查看其他三大型';
+    const wrap = $('other-arcs-wrap');
+    const isHidden = wrap.style.display === 'none';
+    wrap.style.display = isHidden ? 'block' : 'none';
+    $('btn-expand-arc').textContent = isHidden ? '收起' : '查看其他三大型';
   };
-  
+
   // Overall Rating buttons
   document.querySelectorAll('.rating-btn').forEach(btn => {
-      btn.onclick = () => {
-          document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          state.overallRating = btn.getAttribute('data-val');
-      };
+    btn.onclick = () => {
+      document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.overallRating = btn.getAttribute('data-val');
+    };
   });
 
   // Image Save
-  $('btn-save-img').onclick = function() {
+  $('btn-save-img').onclick = function () {
     const card = $('result-card');
     const btn = this;
     const originalText = btn.textContent;
     btn.textContent = '生成中...';
     btn.disabled = true;
 
-    html2canvas(card, { 
-      scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: -window.scrollY 
+    html2canvas(card, {
+      scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: -window.scrollY
     }).then(canvas => {
       try {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        
+
         // 显示预览层供移动端长按保存
         $('overlay-img-container').innerHTML = `<img src="${dataUrl}" alt="Result">`;
         $('result-overlay').style.display = 'flex';
-        
+
       } catch (e) {
         alert('由于浏览器安全限制，图片生成失败。您可以尝试截图保存。');
       }
