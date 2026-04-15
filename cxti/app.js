@@ -466,23 +466,27 @@ function init() {
     btn.disabled = true;
 
     html2canvas(card, { 
-      scale: 2, useCORS: true, allowTaint: true, backgroundColor: null, scrollY: -window.scrollY 
+      scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: -window.scrollY 
     }).then(canvas => {
       try {
-        const link = document.createElement('a');
-        link.download = `CXTI_${state.nickname}.png`;
-        link.href = canvas.toDataURL('image/png');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        
+        // 显示预览层供移动端长按保存
+        $('overlay-img-container').innerHTML = `<img src="${dataUrl}" alt="Result">`;
+        $('result-overlay').style.display = 'flex';
+        
       } catch (e) {
-        alert('由于浏览器安全限制，图片保存失败。您可以尝试截图保存。');
+        alert('由于浏览器安全限制，图片生成失败。您可以尝试截图保存。');
       }
       btn.textContent = originalText; btn.disabled = false;
     }).catch(err => {
       alert('生成图片失败，请重试');
       btn.textContent = originalText; btn.disabled = false;
     });
+  };
+
+  $('btn-close-overlay').onclick = () => {
+    $('result-overlay').style.display = 'none';
   };
 }
 
