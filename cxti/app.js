@@ -40,7 +40,9 @@ let state = {
     B: { pos: 0, neg: 0 },
     C: { pos: 0, neg: 0 },
     D: { pos: 0, neg: 0 },
-  }
+  },
+  pendingOpt: null,
+  pendingE: false
 };
 
 // ── Fisher-Yates shuffle ──────────────────────────────────
@@ -103,13 +105,18 @@ function resetState() {
     resultCode: '',
     scores: {
       A: { pos: 0, neg: 0 }, B: { pos: 0, neg: 0 }, C: { pos: 0, neg: 0 }, D: { pos: 0, neg: 0 }
-    }
+    },
+    pendingOpt: null,
+    pendingE: false
   };
 }
 
 function renderQuestion() {
   const q = state.queue[state.index];
   const total = state.queue.length;
+
+  state.pendingOpt = null;
+  state.pendingE = false;
 
   // Progress
   const pct = (state.index / total) * 100;
@@ -119,10 +126,6 @@ function renderQuestion() {
   $('question-id').textContent = 'Q' + (state.index + 1);
   $('question-text').textContent = q.text;
 
-  // Header Feedback Icons
-  $('btn-q-like').classList.toggle('active', !!state.likes[q.id]);
-  $('btn-q-dislike').classList.toggle('active', !!state.dislikes[q.id]);
-
   // Back button visibility
   $('btn-prev').style.display = state.index === 0 ? 'none' : 'flex';
 
@@ -130,7 +133,6 @@ function renderQuestion() {
   $('btn-e-option').classList.remove('active');
   $('e-feedback-area').classList.remove('active');
   $('e-feedback-input').value = state.feedback[q.id] || '';
-  $('btn-e-submit').classList.remove('selected', 'shake');
 
   // Render options
   const list = $('options-list');
@@ -140,73 +142,70 @@ function renderQuestion() {
     btn.className = 'option-btn';
     btn.innerHTML = `<span class="opt-label">${opt.label}</span><span>${opt.text}</span>`;
 
-    // Highlight immediately on press
-    btn.onpointerdown = () => {
+    btn.onclick = () => {
       list.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
+      state.pendingOpt = opt;
+      state.pendingE = false;
+      $('btn-e-option').classList.remove('active');
+      $('e-feedback-area').classList.remove('active');
     };
-
-    // Advance on release
-    btn.onclick = () => handleAnswer(opt, btn);
     list.appendChild(btn);
   });
 }
 
-function handleAnswer(opt, btn) {
+function submitQuestion(action) {
   const q = state.queue[state.index];
+  let isE = state.pendingE;
+  let opt = state.pendingOpt;
+  let feedbackText = $('e-feedback-input').value.trim();
 
-  // Highlight effect
-  btn.classList.add('selected');
-
-  // Clear E-feedback state
-  $('btn-e-option').classList.remove('active');
-  $('e-feedback-area').classList.remove('active');
-
-  setTimeout(() => {
-    // Handle special Q36 jump
-    if (q.special && opt.label === 'D') {
-      renderResult('SMYC', RESULTS['SMYC']);
-      return;
-    }
-
-    // Record scores
-    opt.tags.forEach(tag => {
-      const m = TAG_MAP[tag];
-      if (m) {
-        if (m.sign > 0) state.scores[m.dim].pos++;
-        else state.scores[m.dim].neg++;
-      }
-    });
-    state.history.push({ tags: opt.tags.slice(), isFeedbackSkipped: false });
-
-    advance();
-  }, 200);
-}
-
-function handleEFeedback(btn) {
-  const q = state.queue[state.index];
-  const feedbackText = $('e-feedback-input').value.trim();
-
-  if (btn) btn.classList.add('selected');
-
-  setTimeout(() => {
-    state.feedback[q.id] = feedbackText;
-    state.history.push({ tags: [], isFeedbackSkipped: true });
-    advance();
-  }, 200);
-}
-
-function toggleLikeDislike(type) {
-  const q = state.queue[state.index];
-  if (type === 'like') {
-    state.likes[q.id] = !state.likes[q.id];
-    if (state.likes[q.id]) state.dislikes[q.id] = false;
-  } else {
-    state.dislikes[q.id] = !state.dislikes[q.id];
-    if (state.dislikes[q.id]) state.likes[q.id] = false;
+  // Validate choice is made
+  if (!isE && !opt) {
+    const list = $('options-list');
+    list.classList.add('shake');
+    setTimeout(() => list.classList.remove('shake'), 400);
+    return;
   }
-  $('btn-q-like').classList.toggle('active', !!state.likes[q.id]);
-  $('btn-q-dislike').classList.toggle('active', !!state.dislikes[q.id]);
+  if (isE && feedbackText.length === 0) {
+    const area = $('e-feedback-area');
+    area.classList.add('shake');
+    setTimeout(() => area.classList.remove('shake'), 400);
+    return;
+  }
+
+  // Handle Action
+  if (action === 'like') {
+    state.likes[q.id] = true;
+    state.dislikes[q.id] = false;
+  } else if (action === 'dislike') {
+    state.dislikes[q.id] = true;
+    state.likes[q.id] = false;
+  }
+
+  setTimeout(() => {
+    if (isE) {
+      state.feedback[q.id] = feedbackText;
+      state.history.push({ tags: [], isFeedbackSkipped: true });
+      advance();
+    } else {
+      // Handle special Q36 (now Q25)
+      if (q.special && opt.label === 'D') {
+        renderResult('SMYC', RESULTS['SMYC']);
+        return;
+      }
+
+      opt.tags.forEach(tag => {
+        const m = TAG_MAP[tag];
+        if (m) {
+          if (m.sign > 0) state.scores[m.dim].pos++;
+          else state.scores[m.dim].neg++;
+        }
+      });
+      state.history.push({ tags: opt.tags.slice(), isFeedbackSkipped: false });
+      advance();
+    }
+  }, 100);
 }
 
 function advance() {
@@ -402,13 +401,9 @@ function copyFeedback() {
 // ── Init ──────────────────────────────────────────────────
 
 function init() {
-  $('q-stats').textContent = `20题，4大维度，17种结果（含1种隐藏人格）`;
+  $('q-stats').textContent = `31题，4大维度，17种结果（含1种隐藏人格）`;
 
   $('btn-start').onclick = () => {
-    showScreen('screen-instructions');
-  };
-
-  $('btn-agree-start').onclick = () => {
     resetState();
     renderQuestion();
     showScreen('screen-question');
@@ -418,9 +413,10 @@ function init() {
   $('btn-retry').onclick = () => showScreen('screen-start');
   $('btn-copy-feedback').onclick = copyFeedback;
 
-  // Header Feedback Icons
-  $('btn-q-like').onclick = () => toggleLikeDislike('like');
-  $('btn-q-dislike').onclick = () => toggleLikeDislike('dislike');
+  // Bottom Feedback Actions
+  $('btn-q-like').onclick = () => submitQuestion('like');
+  $('btn-q-dislike').onclick = () => submitQuestion('dislike');
+  $('btn-q-next').onclick = () => submitQuestion('next');
 
   // E Feedback Toggle
   $('btn-e-option').onclick = () => {
@@ -428,19 +424,12 @@ function init() {
     $('e-feedback-area').classList.toggle('active', isActive);
     if (isActive) {
       $('options-list').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      state.pendingOpt = null;
+      state.pendingE = true;
       $('e-feedback-input').focus();
+    } else {
+      state.pendingE = false;
     }
-  };
-
-  $('btn-e-submit').onclick = () => {
-    const val = $('e-feedback-input').value.trim();
-    if (val.length === 0) {
-      const btn = $('btn-e-submit');
-      btn.classList.add('shake');
-      setTimeout(() => btn.classList.remove('shake'), 400);
-      return;
-    }
-    handleEFeedback($('btn-e-submit'));
   };
 
   // Archetype expand toggle

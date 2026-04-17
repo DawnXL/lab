@@ -35,26 +35,6 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       INSTRUCTION SCREEN
-       ═══════════════════════════════════════════════════════ -->
-  <div id="screen-instructions" class="screen">
-    <div class="app-frame">
-      <div class="card start-card">
-        <h1 class="start-title">OMG 公测说明</h1>
-        <p class="inst-text">感谢你参与 CXTI-omega 公测版！不过，我们可能欺骗了你，实际上，你将面对长达
-          <strong>42题的超大题库……</strong>（现在跑还来得及）本次公测的重要目的就是将之筛选、缩减到 20
-          题左右。<strong>因此，你的反馈非常重要！</strong>
-        </p>
-        <p class="inst-text inst-box">
-          在答题的同时，请在题目的<strong>右上角</strong>点击 ❤️ 或 👎 告诉我们你是否喜欢这道题！<br><br>
-          另外，如果你认为选项中没有符合你的答案，请在 E 选项中填写<strong>你认为更适合的答案！</strong>
-        </p>
-        <p class="start-beta">请记住这是测试版本，多多包涵！</p>
-        <button id="btn-agree-start" class="btn btn-primary">接受命运，开始！</button>
-      </div>
-    </div>
-  </div>
   <div id="screen-question" class="screen">
     <div class="app-frame">
       <!-- 顶部进度条与返回键 -->
@@ -74,10 +54,6 @@
       <div class="card question-card">
         <div class="q-header">
           <p id="question-id" class="question-id">Q1</p>
-          <div class="q-feedback-icons">
-            <button id="btn-q-like" class="q-icon-btn" title="喜欢这道题">❤️</button>
-            <button id="btn-q-dislike" class="q-icon-btn" title="不喜欢这道题">👎</button>
-          </div>
         </div>
         <h2 id="question-text" class="question-text">加载中...</h2>
 
@@ -94,10 +70,14 @@
 
           <div id="e-feedback-area" class="e-feedback-area">
             <textarea id="e-feedback-input" placeholder="请在这里输入您认为更适合的答案..."></textarea>
-            <div class="e-feedback-actions">
-              <button id="btn-e-submit" class="e-btn-submit">提交反馈</button>
-            </div>
           </div>
+        </div>
+
+        <!-- NEW BOTTOM FEEDBACK BUTTONS -->
+        <div class="bottom-feedback-actions">
+           <button id="btn-q-like" class="feedback-action-btn">❤️ 喜欢这题</button>
+           <button id="btn-q-dislike" class="feedback-action-btn">👎 不喜欢这题</button>
+           <button id="btn-q-next" class="feedback-action-btn">➡ 下一题</button>
         </div>
       </div>
 

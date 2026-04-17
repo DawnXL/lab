@@ -887,3 +887,38 @@ body {
 .rating-emoji {
   font-size: 1.4rem;
 }
+
+/* ── Bottom Feedback ── */
+
+.bottom-feedback-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.feedback-action-btn {
+  font-size: 1.1rem;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.feedback-action-btn:hover {
+  background-color: var(--blue-dim);
+  border-color: var(--blue);
+  color: var(--blue-dark);
+  opacity: 1;
+}
+
+.feedback-action-btn:active {
+  transform: scale(0.95);
+}
