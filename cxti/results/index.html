@@ -1,210 +1,1388 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>C(X)TI · 全部人格档案</title>
+  <title>C(X)TI · 城堡群像报告</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../style.css">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── 翻页容器 ───────────────────────────────── */
+    .wrap {
+      height: 100vh;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+      scrollbar-width: none;
+    }
+
+    .wrap::-webkit-scrollbar {
+      display: none;
+    }
+
+    .page {
+      height: 100vh;
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 50px 24px 70px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .content {
+      width: 100%;
+      max-width: 460px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(36px);
+      transition: opacity 0.9s cubic-bezier(.2, .7, .3, 1), transform 0.9s cubic-bezier(.2, .7, .3, 1);
+    }
+
+    .page.visible .content {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── 文字样式 ───────────────────────────────── */
+    .label {
+      font-size: 0.78rem;
+      letter-spacing: 3px;
+      opacity: 0.55;
+      margin-bottom: 18px;
+      font-weight: 500;
+    }
+
+    .title {
+      font-size: 1.45rem;
+      font-weight: 900;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .sub {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      opacity: 0.85;
+      margin-top: 12px;
+    }
+
+    .quip {
+      font-size: 0.82rem;
+      line-height: 1.7;
+      opacity: 0.65;
+      margin-top: 18px;
+      font-style: italic;
+    }
+
+    .huge-num {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 5.2rem;
+      font-weight: 900;
+      line-height: 1;
+      margin: 8px 0;
+    }
+
+    .hint {
+      position: absolute;
+      bottom: 18px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 0.72rem;
+      opacity: 0.4;
+      animation: bob 2.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes bob {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(5px);
+      }
+    }
+
+    /* ── 背景色 ─────────────────────────────────── */
+    .bg-cream {
+      background: #FDF6E3;
+      color: #1A3560;
+    }
+
+    .bg-pink {
+      background: #F5BEC1;
+      color: #1A3560;
+    }
+
+    .bg-violet {
+      background: #CBC4E6;
+      color: #1A3560;
+    }
+
+    .bg-yellow {
+      background: #F6E5A5;
+      color: #1A3560;
+    }
+
+    .bg-blue {
+      background: #BDD0EE;
+      color: #1A3560;
+    }
+
+    .bg-teal {
+      background: #055F5F;
+      color: #E0F4F4;
+    }
+
+    .bg-dark {
+      background: linear-gradient(180deg, #1A3560 0%, #0D1F3B 100%);
+      color: #FDF6E3;
+    }
+
+    /* ── 饼图 ───────────────────────────────────── */
+    .pie-wrap {
+      position: relative;
+      margin: 8px auto 16px;
+      width: 200px;
+      height: 200px;
+    }
+
+    .pie-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .pie-slice {
+      transition: transform 0.3s cubic-bezier(.2, .7, .3, 1), opacity 0.3s;
+      transform-origin: center;
+      cursor: pointer;
+      stroke: #FDF6E3;
+      stroke-width: 2;
+    }
+
+    .pie-slice.selected {
+      transform: scale(1.06);
+    }
+
+    .pie-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      font-size: 0.78rem;
+      opacity: 0.6;
+      font-weight: 500;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin: 6px 0 6px;
+      text-align: left;
+    }
+
+    .legend-row {
+      display: grid;
+      grid-template-columns: 14px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .legend-row:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .legend-row.selected {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    .legend-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .legend-name {
+      font-weight: 600;
+    }
+
+    .legend-stat {
+      opacity: 0.65;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+
+    /* 细分面板 */
+    .detail-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.45s cubic-bezier(.2, .7, .3, 1), margin 0.3s, padding 0.3s;
+      background: rgba(255, 255, 255, 0.55);
+      border-radius: 14px;
+      margin: 0;
+      padding: 0 14px;
+    }
+
+    .detail-panel.open {
+      max-height: 420px;
+      margin: 10px 0 4px;
+      padding: 14px;
+    }
+
+    .detail-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .detail-desc {
+      font-size: 0.72rem;
+      line-height: 1.55;
+      opacity: 0.75;
+      margin-bottom: 12px;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .detail-cell {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 8px;
+      padding: 6px 4px;
+    }
+
+    .detail-cell img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 6px;
+      display: block;
+    }
+
+    .detail-cell-name {
+      font-size: 0.68rem;
+      margin-top: 4px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .detail-cell-pct {
+      font-size: 0.68rem;
+      opacity: 0.65;
+      margin-top: 2px;
+    }
+
+    .detail-single {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .detail-single img {
+      width: 100px;
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    .detail-single .big-num {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+    }
+
+    /* ── 维度对比条 ─────────────────────────────── */
+    .dim-bar {
+      display: flex;
+      height: 54px;
+      border-radius: 27px;
+      overflow: hidden;
+      margin: 22px 0 16px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      font-weight: 900;
+      font-size: 0.95rem;
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .dim-side {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      transition: flex 1.2s cubic-bezier(.2, .7, .3, 1);
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .dim-side.left {
+      flex: 1;
+    }
+
+    .dim-side.right {
+      flex: 1;
+    }
+
+    .page.visible .dim-side.left {
+      flex: var(--lw, 1);
+    }
+
+    .page.visible .dim-side.right {
+      flex: var(--rw, 1);
+    }
+
+    .dim-side-pos {
+      background: #DAA809;
+    }
+
+    .dim-side-neg {
+      background: #2C94BA;
+    }
+
+    .dim-side-pos.alt {
+      background: #C93040;
+    }
+
+    .dim-side-neg.alt {
+      background: #8EBD8A;
+    }
+
+    .dim-vs-line {
+      font-size: 0.82rem;
+      opacity: 0.7;
+      margin-bottom: 2px;
+    }
+
+    /* ── 人格卡 ─────────────────────────────────── */
+    .persona-img {
+      width: 210px;
+      height: 210px;
+      border-radius: 20px;
+      object-fit: cover;
+      margin: 14px auto 6px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+      display: block;
+    }
+
+    .persona-name {
+      font-family: 'Noto Serif SC', serif;
+      font-size: calc(2.6rem * var(--name-scale, 1));
+      font-weight: 900;
+      line-height: 1.1;
+      margin: 8px 0 4px;
+    }
+
+    .persona-code {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 0.95rem;
+      letter-spacing: 5px;
+      opacity: 0.55;
+      margin-bottom: 2px;
+    }
+
+    .persona-stat {
+      font-size: 0.84rem;
+      opacity: 0.72;
+      margin-top: 8px;
+    }
+
+    .persona-desc {
+      font-size: 0.8rem;
+      line-height: 1.65;
+      opacity: 0.75;
+      margin-top: 10px;
+      padding: 0 4px;
+    }
+
+    /* ── 点导航 ─────────────────────────────────── */
+    .dots {
+      position: fixed;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      z-index: 10;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(128, 128, 128, 0.4);
+      transition: all 0.3s;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+
+    .dot.active {
+      background: rgba(0, 0, 0, 0.65);
+      transform: scale(1.6);
+    }
+
+    /* ── 状态页 ─────────────────────────────────── */
+    .status-full {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: #FDF6E3;
+      color: #1A3560;
+      z-index: 100;
+      font-size: 0.95rem;
+      transition: opacity 0.4s;
+      padding: 40px;
+    }
+
+    .status-full.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spin {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(26, 53, 96, 0.2);
+      border-top-color: #1A3560;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 14px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── 终章 ───────────────────────────────────── */
+    .page-final .persona-name {
+      background: linear-gradient(135deg, #F6E5A5, #F5BEC1, #CBC4E6, #BDD0EE);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .final-code-big {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 3.2rem;
+      letter-spacing: 10px;
+      font-weight: 900;
+      margin: 16px 0 4px;
+      opacity: 0.9;
+    }
+
+    .final-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(253, 246, 227, 0.15);
+      border: 1px solid rgba(253, 246, 227, 0.3);
+      margin-top: 12px;
+    }
+
+    .persona-imgs-wrap {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin: 10px 0;
+    }
+
+    .persona-imgs-wrap .persona-img {
+      width: 140px;
+      height: 140px;
+      margin: 0;
+    }
+
+    @media (max-width: 360px) {
+      .persona-img {
+        width: 180px;
+        height: 180px;
+      }
+
+      .persona-name {
+        font-size: calc(2.2rem * var(--name-scale, 1));
+      }
+
+      .huge-num {
+        font-size: 4.2rem;
+      }
+
+      .title {
+        font-size: 1.25rem;
+      }
+
+      .pie-wrap {
+        width: 170px;
+        height: 170px;
+      }
+    }
+  </style>
 </head>
+
 <body>
 
-  <!-- 画廊列表页 -->
-  <div id="screen-all-profiles" class="screen active">
-    <div class="app-frame">
-      <div class="profiles-page">
-        <h2 class="profiles-page-title">全部人格档案</h2>
-        <div id="profiles-gallery"></div>
-        <p class="credits-text">策划/文案：锈锈冰柜、疲惫凉皮 | 策划/程序：饥饿电视<br>美术：气泡冰萃 | UI/文案：哎草团子</p>
-      </div>
+  <div id="status" class="status-full">
+    <div>
+      <div class="spin"></div>
+      <p>正在召唤城堡群像…</p>
     </div>
   </div>
 
-  <!-- 人格详情页 -->
-  <div id="screen-profile-detail" class="screen">
-    <div class="app-frame">
-      <div id="profile-detail-card" class="profile-detail-card">
-        <h1 id="detail-name" class="detail-name"></h1>
-        <p id="detail-stat-line" class="stat-line"></p>
-        <div id="detail-img-wrap" class="result-img-wrap"></div>
-        <div class="result-divider"></div>
-        <p id="detail-desc" class="result-desc"></p>
-        <div id="detail-archetype-section" class="archetype-section">
-          <p class="archetype-prefix">所属四大型：</p>
-          <span id="detail-archetype-tag" class="archetype-tag"></span>
-          <p id="detail-archetype-desc" class="archetype-desc"></p>
-        </div>
-        <p id="detail-dims-text" class="detail-dims-text"></p>
-        <button id="btn-back-to-profiles" class="btn btn-secondary">← 返回人格列表</button>
+  <div class="dots" id="dots"></div>
+
+  <div class="wrap" id="wrap">
+
+    <!-- 1. 开场 -->
+    <section class="page bg-cream" data-idx="0">
+      <div class="content">
+        <p class="label">C(X)TI · 城堡群像报告</p>
+        <p class="sub">截至 <span id="today-date"></span>，共有</p>
+        <h1 class="huge-num" id="total-count">—</h1>
+        <p class="sub">位城堡批<br>留下了他们的成分鉴定</p>
+        <p class="quip">下面，让我们看看这个群体<br>到底长什么样 ——</p>
       </div>
-    </div>
+      <div class="hint">↓ 上滑翻页</div>
+    </section>
+
+    <!-- 2. 饼图分布 -->
+    <section class="page bg-cream" data-idx="1">
+      <div class="content">
+        <p class="label">第一章 · 群像分布</p>
+        <h2 class="title">大家都是哪一派？</h2>
+        <div class="pie-wrap">
+          <svg class="pie-svg" viewBox="0 0 100 100" id="pie-svg"></svg>
+          <div class="pie-center" id="pie-center">共 <span id="pie-total">0</span> 人</div>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div class="detail-panel" id="detail-panel">
+          <p class="detail-title" id="detail-title"></p>
+          <p class="detail-desc" id="detail-desc"></p>
+          <div id="detail-body"></div>
+        </div>
+        <p class="quip" id="arch-quip"></p>
+      </div>
+      <div class="hint">↓</div>
+    </section>
+
+    <!-- 3. 最常见 -->
+    <section class="page" id="page-common" data-idx="2">
+      <div class="content">
+        <p class="label">第二章 · 最常见</p>
+        <h2 class="title">最多人测出的人格是</h2>
+        <p class="persona-code" id="common-code"></p>
+        <h1 class="persona-name" id="common-name">—</h1>
+        <div id="common-imgs" class="persona-imgs-wrap"></div>
+        <p class="persona-stat" id="common-stat"></p>
+        <p class="quip" id="common-quip"></p>
+      </div>
+      <div class="hint">↓</div>
+    </section>
+
+    <!-- 4. 最稀有 -->
+    <section class="page" id="page-rare" data-idx="3">
+      <div class="content">
+        <p class="label">第三章 · 最稀有</p>
+        <h2 class="title">而这一种，最少人中招</h2>
+        <p class="persona-code" id="rare-code"></p>
+        <h1 class="persona-name" id="rare-name">—</h1>
+        <div id="rare-imgs" class="persona-imgs-wrap"></div>
+        <p class="persona-stat" id="rare-stat"></p>
+        <p class="quip" id="rare-quip"></p>
+      </div>
+      <div class="hint">↓</div>
+    </section>
+
+    <!-- 5. 正邪 -->
+    <section class="page bg-pink" data-idx="4">
+      <div class="content">
+        <p class="label">第四章 · 维度 ① 正义 vs 邪恶</p>
+        <h2 class="title">「城堡该锁死」vs「路过吃一口」</h2>
+        <div class="dim-bar">
+          <div class="dim-side left dim-side-pos alt" id="dim-ZE-left">正义</div>
+          <div class="dim-side right dim-side-neg alt" id="dim-ZE-right">邪恶</div>
+        </div>
+        <p class="sub" id="dim-ZE-verdict"></p>
+        <p class="quip" id="dim-ZE-quip"></p>
+      </div>
+      <div class="hint">↓</div>
+    </section>
+
+    <!-- 6. 浓淡 -->
+    <section class="page bg-yellow" data-idx="5">
+      <div class="content">
+        <p class="label">第五章 · 维度 ② 浓烈 vs 淡然</p>
+        <h2 class="title">「产粮焦虑」vs「路过看看」</h2>
+        <div class="dim-bar">
+          <div class="dim-side left dim-side-pos" id="dim-ND-left">浓烈</div>
+          <div class="dim-side right dim-side-neg" id="dim-ND-right">淡然</div>
+        </div>
+        <p class="sub" id="dim-ND-verdict"></p>
+        <p class="quip" id="dim-ND-quip"></p>
+      </div>
+      <div class="hint">↓</div>
+    </section>
+
+    <!-- 7. 守乱 -->
+    <section class="page bg-blue" data-idx="6">
+      <div class="content">
+        <p class="label">第六章 · 维度 ③ 守序 vs 混乱</p>
+        <h2 class="title">「不拆不逆」vs「来都来了」</h2>
+        <div class="dim-bar">
+          <div class="dim-side left dim-side-pos" id="dim-XL-left">守序</div>
+          <div class="dim-side right dim-side-neg" id="dim-XL-right">混乱</div>
+        </div>
+        <p class="sub" id="dim-XL-verdict"></p>
+        <p class="quip" id="dim-XL-quip"></p>
+      </div>
+      <div class="hint">↓</div>
+    </section>
+
+    <!-- 8. 素荤 -->
+    <section class="page bg-violet" data-idx="7">
+      <div class="content">
+        <p class="label">第七章 · 维度 ④ 素食 vs 荤食</p>
+        <h2 class="title">「纯爱战神」vs「无肉不欢」</h2>
+        <div class="dim-bar">
+          <div class="dim-side left dim-side-pos" id="dim-SH-left">素食</div>
+          <div class="dim-side right dim-side-neg" id="dim-SH-right">荤食</div>
+        </div>
+        <p class="sub" id="dim-SH-verdict"></p>
+        <p class="quip" id="dim-SH-quip"></p>
+      </div>
+      <div class="hint">↓</div>
+    </section>
+
+    <!-- 9. 终章 -->
+    <section class="page bg-dark page-final" data-idx="8">
+      <div class="content">
+        <p class="label" style="opacity:0.55">终章 · 最终揭晓</p>
+        <p class="sub" style="opacity:0.7">如果把整个城堡<br>当作一个人</p>
+        <p class="sub" style="opacity:0.9; margin-top: 10px;">TA 的 C(X)TI 是</p>
+        <p class="final-code-big" id="final-code">————</p>
+        <h1 class="persona-name" id="final-name">—</h1>
+        <img id="final-img" class="persona-img" alt="">
+        <p class="final-tag" id="final-arc"></p>
+        <p class="persona-desc" id="final-desc" style="opacity:0.75"></p>
+        <p class="quip" id="final-closer" style="opacity:0.55; margin-top:22px;"></p>
+      </div>
+    </section>
+
   </div>
 
   <script src="../data/results.js"></script>
   <script>
-    // ── 常量（与 app.js 保持一致）────────────────────────────
+    // ═══════════════════════════════════════════════════════
+    // 配置
+    // ═══════════════════════════════════════════════════════
     const SUPABASE_URL = 'https://qhraciuakpecdzztfkfk.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFocmFjaXVha3BlY2R6enRma2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODIzODUsImV4cCI6MjA5MjE1ODM4NX0.f36pZzpk0r7Ha7znWG_yzdmEjjP992TSq7YRxw6-fdc';
 
-    const ARCHETYPE_COLORS = {
-      '信仰狂热型': { bg: '#F5BEC1', text: '#1A3560' },
-      '低调洁癖型': { bg: '#CBC4E6', text: '#1A3560' },
-      '混乱快乐型': { bg: '#F6E5A5', text: '#1A3560' },
-      '佛系体验型': { bg: '#BDD0EE', text: '#1A3560' },
-    };
-
-    const GALLERY_ROWS = [
-      { archetype: '信仰狂热型', codes: ['ZNXS','ZNXH','ENXS','ENXH'], colorClass: 'arc-red' },
-      { archetype: '低调洁癖型', codes: ['ZDXS','ZDXH','EDXS','EDXH'], colorClass: 'arc-purple' },
-      { archetype: '混乱快乐型', codes: ['ZNLS','ZNLH','ENLS','ENLH'], colorClass: 'arc-yellow' },
-      { archetype: '佛系体验型', codes: ['ZDLS','ZDLH','EDLS','EDLH'], colorClass: 'arc-blue' },
+    const ARCHETYPE_CONF = [
+      { key: '信仰狂热型', codes: ['ZNXS', 'ZNXH', 'ENXS', 'ENXH'], color: '#F5BEC1' },
+      { key: '低调洁癖型', codes: ['ZDXS', 'ZDXH', 'EDXS', 'EDXH'], color: '#CBC4E6' },
+      { key: '混乱快乐型', codes: ['ZNLS', 'ZNLH', 'ENLS', 'ENLH'], color: '#F6E5A5' },
+      { key: '佛系体验型', codes: ['ZDLS', 'ZDLH', 'EDLS', 'EDLH'], color: '#BDD0EE' },
     ];
+    const SMYC_CONF = { key: '审美异常者', color: '#055F5F' };
 
-    const CODE_DIM_MAP = {
-      Z:'正义', E:'邪恶', N:'浓烈', D:'淡然',
-      X:'守序', L:'混乱', S:'素食', H:'荤食'
-    };
-
-    // ── 工具 ─────────────────────────────────────────────────
+    const ALL_CODES = ARCHETYPE_CONF.flatMap(a => a.codes);
     const $ = id => document.getElementById(id);
 
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      $(id).classList.add('active');
-      window.scrollTo(0, 0);
+    // ═══════════════════════════════════════════════════════
+    // 文案库（动态，所有走向都覆盖）
+    // ═══════════════════════════════════════════════════════
+    const DIM_COPY = {
+      ZE: {
+        Z: {
+          tight: [
+            '正义略微占先 —— {pct}%。这是一场旗鼓相当的较量。',
+            '以 {pct}% 的微弱优势，"城堡该锁死"派险胜。'
+          ],
+          clear: [
+            '城堡就该锁死 —— {pct}% 的人这么认为。',
+            '正义派占了明显多数（{pct}%）：这对必须在一起。'
+          ],
+          strong: [
+            '"城堡该锁死"压倒性胜出 —— {pct}%。',
+            '信仰感爆表，{pct}% 的人就认这一对。'
+          ],
+          landslide: [
+            '正义派几乎一边倒 —— {pct}%。真爱粉浓度惊人。',
+            '{pct}% 都站正义 —— 这个群体在这件事上已达成共识。'
+          ],
+        },
+        E: {
+          tight: [
+            '邪恶略微占先 —— {pct}%。BE 派刚刚好多了那么一点点。',
+            '以 {pct}% 微弱领先，"他们已经 BE 了"的想法扳回一城。'
+          ],
+          clear: [
+            '{pct}% 站在邪恶一边 —— BE 才是美学归宿。',
+            '邪恶派占了明显多数（{pct}%）：路过吃一口。'
+          ],
+          strong: [
+            '{pct}% 的人说：他们早就 BE 了，你们别装。',
+            '"路过吃一口"压倒性胜出 —— {pct}%。这是一个习惯了现实的群体。'
+          ],
+          landslide: [
+            '这个圈子对 BE 的接受度已经到病态程度 —— {pct}%。',
+            '邪恶派几乎一边倒 —— {pct}%。还有什么信仰可言。'
+          ],
+        }
+      },
+      ND: {
+        N: {
+          tight: [
+            '浓烈略微占先 —— {pct}%。产粮焦虑症的苗头有了。',
+            '{pct}% vs 剩下：看起来平分秋色，但浓度派其实在偷偷数。'
+          ],
+          clear: [
+            '{pct}% 的城堡批是浓度派：没饭就约稿。',
+            '产粮焦虑症席卷了 {pct}% 的人。'
+          ],
+          strong: [
+            '{pct}% 都在找饭吃 —— 这个圈子的肝很硬。',
+            '浓度派压倒性占先 —— {pct}%。自己做饭已成刚需。'
+          ],
+          landslide: [
+            '{pct}% 都是浓度党 —— 这个圈子几乎全员产粮机。',
+            '浓烈派几乎一边倒 —— {pct}%。饿到会抢的那种。'
+          ],
+        },
+        D: {
+          tight: [
+            '淡然略微占先 —— {pct}%。大家其实还挺佛。',
+            '以 {pct}% 微弱领先，佛系派占上风，但粮食焦虑依然存在。'
+          ],
+          clear: [
+            '{pct}% 的人是淡然派：有饭吃饭，没饭不强求。',
+            '佛系派占了明显多数（{pct}%）：路过不一定吃。'
+          ],
+          strong: [
+            '{pct}% 都佛 —— 这是一个能稳住自己生活的群体。',
+            '淡然派压倒性胜出 —— {pct}%。真·佛系爱好者。'
+          ],
+          landslide: [
+            '{pct}% 都淡得不行 —— 大家的重心真的不在这。',
+            '淡然派几乎一边倒 —— {pct}%。这个圈子真的很养老。'
+          ],
+        }
+      },
+      XL: {
+        X: {
+          tight: [
+            '守序略微占先 —— {pct}%。底线还在。',
+            '以 {pct}% 微弱领先，不拆不逆派险胜。'
+          ],
+          clear: [
+            '{pct}% 的人坚持不拆不逆 —— 这条底线是法律。',
+            '守序派占了明显多数（{pct}%）：城堡反过来就是废区一片。'
+          ],
+          strong: [
+            '{pct}% 守序 —— 这个圈子对"本命 CP"的忠诚度惊人。',
+            '守序派压倒性占先 —— {pct}%。洁癖普遍存在。'
+          ],
+          landslide: [
+            '{pct}% 都守 —— 这个群体的专一度堪比婚姻。',
+            '守序派几乎一边倒 —— {pct}%。拆逆在这里是异端。'
+          ],
+        },
+        L: {
+          tight: [
+            '混乱略微占先 —— {pct}%。杂食派悄悄赢了。',
+            '以 {pct}% 微弱领先，"来都来了"的精神胜出一点点。'
+          ],
+          clear: [
+            '{pct}% 的人是杂食派 —— 拆逆？来都来了。',
+            '混乱派占了明显多数（{pct}%）：同人不用那么较真。'
+          ],
+          strong: [
+            '{pct}% 都混 —— 这是一个没有洁癖的快乐老家。',
+            '混乱派压倒性占先 —— {pct}%。什么排列组合都能嗑。'
+          ],
+          landslide: [
+            '{pct}% 都混乱 —— 这个圈子就是个大型杂食自助餐。',
+            '混乱派几乎一边倒 —— {pct}%。原教旨主义者已经被同化了。'
+          ],
+        }
+      },
+      SH: {
+        S: {
+          tight: [
+            '素食略微占先 —— {pct}%。清水党小胜。',
+            '以 {pct}% 微弱领先，纯爱派扳回一局。'
+          ],
+          clear: [
+            '{pct}% 的人是清水党：情感链接比肉体重要。',
+            '素食派占了明显多数（{pct}%）：纯爱才是永恒。'
+          ],
+          strong: [
+            '{pct}% 吃素 —— 这个圈子的精神洁癖普遍存在。',
+            '素食派压倒性占先 —— {pct}%。车？不需要。'
+          ],
+          landslide: [
+            '{pct}% 都吃素 —— 这是一个守身如玉的群体。',
+            '素食派几乎一边倒 —— {pct}%。开车的属于极少数。'
+          ],
+        },
+        H: {
+          tight: [
+            '荤食略微占先 —— {pct}%。车速稍微快了一点。',
+            '以 {pct}% 微弱领先，荤食派在方向盘上占了上风。'
+          ],
+          clear: [
+            '{pct}% 的人吃荤：开车！开车！',
+            '荤食派占了明显多数（{pct}%）：给我像梅奔一样冲。'
+          ],
+          strong: [
+            '{pct}% 的人认为车速就是 CP 浓度。',
+            '荤食派压倒性占先 —— {pct}%。这是一个很会开的圈子。'
+          ],
+          landslide: [
+            '{pct}% 都吃荤 —— 这是一个天天堵车的圈子。',
+            '荤食派几乎一边倒 —— {pct}%。红牛梅奔请坐稳。'
+          ],
+        }
+      }
+    };
+
+    const ARCH_QUIP = {
+      '信仰狂热型': [
+        '我们中最多的是原教旨主义者 —— 城堡就该锁死，这是最大群体的共识。',
+        '这个圈子的信仰感依然是主流 —— 城堡批的底色。'
+      ],
+      '低调洁癖型': [
+        '最多的是隐士党 —— 默默爱、默默嗑，从不发声但从未离开。',
+        '这个群体最大的派系，其实最不喧嚣。'
+      ],
+      '混乱快乐型': [
+        '最多的是杂食派 —— 什么都能嗑，自己还能做饭，是这个圈子的生产力核心。',
+        '杂食狂欢派领先 —— 这个圈子欢迎所有排列组合。'
+      ],
+      '佛系体验型': [
+        '最多的是佛系派 —— 只是来吃饭的，不吵不闹。',
+        '佛系派最多 —— 这个群体最稳的基本盘。'
+      ],
+      '审美异常者': [
+        '有点不妙 —— "审美异常者"竟然是最大群体。这份报告本身可能就异常。',
+        '最多的竟然是审美异常者 —— 隐藏彩蛋已经不隐藏了。'
+      ],
+    };
+
+    const COMMON_QUIP_TIERS = [
+      { min: 25, lines: ['四分之一以上都是 TA —— 主流中的主流。', '这是最多人殊途同归的归宿。'] },
+      { min: 15, lines: ['最多人汇聚的地方。', '选项虽多，但大家的选择其实挺集中。'] },
+      { min: 0, lines: ['虽然最常见，但并未一家独大。', '在 16 种里险胜 —— 差距不大。'] },
+    ];
+
+    const RARE_QUIP_TIERS = [
+      { max: 1, lines: ['目前只有一个孤勇者。', '全世界就那么一位 —— 珍稀物种。'] },
+      { max: 3, lines: ['只有寥寥几位 —— 堪称稀有物种。', '凤毛麟角 —— 少到可以开茶话会。'] },
+      { max: 9999, lines: ['在大多数人的反面，TA 找到了自己的路。', '人少，但也不孤单。'] },
+    ];
+
+    const FINAL_CLOSER = {
+      '信仰狂热型': [
+        '原来我们整体而言，是一个虔诚的信徒 —— 城堡批本色。',
+        '城堡即信仰 —— 这份报告证明了。'
+      ],
+      '低调洁癖型': [
+        '原来我们整体而言，是一个沉默的守序者 —— 内心爱得深沉。',
+        '不声不响，但心里清清楚楚 —— 这是我们的底色。'
+      ],
+      '混乱快乐型': [
+        '原来我们整体而言，是一个快乐的杂食者 —— 想嗑啥嗑啥。',
+        '什么都能吃，什么都能乐 —— 这个圈子的本色。'
+      ],
+      '佛系体验型': [
+        '原来我们整体而言，是一个佛系观众 —— 随缘嗑糖，岁月静好。',
+        '佛系得很 —— 城堡不会主动打扰你。'
+      ],
+    };
+
+    function pickLine(arr, seed) {
+      if (!arr || !arr.length) return '';
+      return arr[seed % arr.length];
     }
 
-    // ── 统计 ─────────────────────────────────────────────────
-    let statsCache = null;
-    async function fetchStats() {
-      if (statsCache) return statsCache;
-      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/results?select=code`, {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-          }
-        });
-        if (!res.ok) return null;
-        const rows = await res.json();
-        const counts = {};
-        rows.forEach(r => { counts[r.code] = (counts[r.code] || 0) + 1; });
-        statsCache = { total: rows.length, counts };
-        return statsCache;
-      } catch { return null; }
+    // ═══════════════════════════════════════════════════════
+    // 数据拉取与分析
+    // ═══════════════════════════════════════════════════════
+    async function fetchAll() {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/results?select=code`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        }
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
     }
 
-    function statLine(code, stats) {
-      if (!stats || stats.total === 0) return '';
-      const n = stats.counts[code] || 0;
-      const pct = (n / stats.total * 100).toFixed(1);
-      return `目前有 ${pct}% 的玩家测得此人格`;
-    }
+    function analyze(rows) {
+      const counts = {};
+      rows.forEach(r => { counts[r.code] = (counts[r.code] || 0) + 1; });
 
-    // ── 画廊渲染 ─────────────────────────────────────────────
-    function renderAllProfiles() {
-      const gallery = $('profiles-gallery');
-      gallery.innerHTML = '';
+      const total = rows.length;
+      const smycCount = counts['SMYC'] || 0;
+      const totalNonSmyc = total - smycCount;
 
-      GALLERY_ROWS.forEach(row => {
-        const rowEl = document.createElement('div');
-        rowEl.className = `archetype-row ${row.colorClass}`;
-        const grid = document.createElement('div');
-        grid.className = 'profiles-grid';
-        row.codes.forEach(code => {
-          const r = RESULTS[code];
-          const thumb = document.createElement('div');
-          thumb.className = 'profile-thumb';
-          thumb.innerHTML = `
-            <img src="../${r.img}" alt="${r.name}" class="thumb-img">
-            <span class="thumb-name">${r.name}</span>
-          `;
-          thumb.onclick = () => openProfileDetail(code);
-          grid.appendChild(thumb);
-        });
-        rowEl.appendChild(grid);
-        gallery.appendChild(rowEl);
+      const archCounts = {};
+      ARCHETYPE_CONF.forEach(a => {
+        archCounts[a.key] = a.codes.reduce((s, c) => s + (counts[c] || 0), 0);
+      });
+      archCounts[SMYC_CONF.key] = smycCount;
+
+      const nonSmycSorted = Object.entries(counts)
+        .filter(([c, n]) => c !== 'SMYC' && n > 0)
+        .sort((a, b) => b[1] - a[1]);
+
+      let mostCommon = null;
+      let rarest = null;
+      if (nonSmycSorted.length > 0) {
+        const maxCnt = nonSmycSorted[0][1];
+        const minCnt = nonSmycSorted[nonSmycSorted.length - 1][1];
+        mostCommon = nonSmycSorted.filter(x => x[1] === maxCnt);
+        rarest = nonSmycSorted.filter(x => x[1] === minCnt);
+      }
+
+      const untestedCount = ALL_CODES.filter(c => !counts[c]).length;
+
+      const dim = { Z: 0, E: 0, N: 0, D: 0, X: 0, L: 0, S: 0, H: 0 };
+      Object.entries(counts).forEach(([code, cnt]) => {
+        if (code === 'SMYC') return;
+        code.split('').forEach(c => { if (dim[c] !== undefined) dim[c] += cnt; });
       });
 
-      // SMYC 行
-      const smycRow = document.createElement('div');
-      smycRow.className = 'archetype-row arc-grey';
-      const smycGrid = document.createElement('div');
-      smycGrid.className = 'profiles-grid';
-      const smycThumb = document.createElement('div');
-      smycThumb.className = 'profile-thumb';
-      smycThumb.innerHTML = `
-        <img src="../${RESULTS['SMYC'].img}" alt="？" class="thumb-img">
-        <span class="thumb-name">？？？？？</span>
-      `;
-      smycThumb.onclick = () => openProfileDetail('SMYC_GALLERY');
-      smycGrid.appendChild(smycThumb);
-      smycRow.appendChild(smycGrid);
-      gallery.appendChild(smycRow);
+      const overallCode =
+        (dim.Z >= dim.E ? 'Z' : 'E') +
+        (dim.N >= dim.D ? 'N' : 'D') +
+        (dim.X >= dim.L ? 'X' : 'L') +
+        (dim.S >= dim.H ? 'S' : 'H');
+
+      return {
+        total, smycCount, totalNonSmyc,
+        counts, archCounts,
+        mostCommon, rarest, untestedCount,
+        dim, overallCode
+      };
     }
 
-    // ── 详情页 ───────────────────────────────────────────────
-    function openProfileDetail(code) {
-      const isSmycGallery = (code === 'SMYC_GALLERY');
-      const r = isSmycGallery ? RESULTS['SMYC'] : RESULTS[code];
-      const card = $('profile-detail-card');
-
-      if (isSmycGallery) {
-        card.style.backgroundColor = r.color;
-        card.style.color = r.text;
-      } else {
-        const arcColors = ARCHETYPE_COLORS[r.archetype] || { bg: r.color, text: r.text };
-        card.style.backgroundColor = arcColors.bg;
-        card.style.color = arcColors.text;
+    // ═══════════════════════════════════════════════════════
+    // 饼图
+    // ═══════════════════════════════════════════════════════
+    function polar(cx, cy, r, angle) {
+      return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
+    }
+    function arcPath(cx, cy, r, startAngle, endAngle) {
+      // 整圆特判（SVG arc 画不出完整 360 度）
+      if (Math.abs(endAngle - startAngle) >= Math.PI * 2 - 0.001) {
+        return `M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} Z`;
       }
-
-      $('detail-name').textContent = isSmycGallery ? '？？？？？' : r.name;
-      $('detail-stat-line').textContent = '';
-      if (!isSmycGallery) {
-        fetchStats().then(s => { $('detail-stat-line').textContent = statLine(code, s); });
-      }
-
-      const imgWrap = $('detail-img-wrap');
-      if (r.img) {
-        imgWrap.innerHTML = `<img src="../${r.img}" alt="${r.name}" class="result-img">`;
-        imgWrap.style.display = 'block';
-      } else {
-        imgWrap.style.display = 'none';
-      }
-
-      $('detail-desc').textContent = isSmycGallery
-        ? '主题曲：？？？？？！——？？？？！？？？？？？？！'
-        : r.desc;
-
-      const arcSection = $('detail-archetype-section');
-      const arcPrefix = arcSection.querySelector('.archetype-prefix');
-      if (isSmycGallery) {
-        arcPrefix.textContent = '';
-        $('detail-archetype-tag').textContent = '你不属于四大类型之一';
-        $('detail-archetype-desc').textContent = '系统识别到用户在部分题目中选择异常，触发隐藏判定，无视其他条件直接进入此词条。';
-      } else {
-        arcPrefix.textContent = '所属四大型：';
-        const arc = ARCHETYPES[r.archetype];
-        $('detail-archetype-tag').textContent = `${r.archetype} · ${arc ? arc.title : ''}`;
-        $('detail-archetype-desc').textContent = arc ? arc.desc : '';
-      }
-
-      const dimsEl = $('detail-dims-text');
-      if (isSmycGallery) {
-        dimsEl.textContent = '八维倾向：？？？？？';
-      } else {
-        const dims = code.split('').map(c => CODE_DIM_MAP[c] || c).join('，');
-        dimsEl.textContent = `八维倾向：${dims}`;
-      }
-
-      showScreen('screen-profile-detail');
+      const [x1, y1] = polar(cx, cy, r, startAngle);
+      const [x2, y2] = polar(cx, cy, r, endAngle);
+      const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
+      return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
     }
 
-    // ── 启动 ─────────────────────────────────────────────────
-    $('btn-back-to-profiles').onclick = () => showScreen('screen-all-profiles');
-    renderAllProfiles();
+    let selectedArchKey = null;
+
+    function renderPie(data) {
+      const svg = $('pie-svg');
+      svg.innerHTML = '';
+      const cx = 50, cy = 50, r = 45;
+      const total = data.total;
+      if (total === 0) return;
+
+      const all = [...ARCHETYPE_CONF, SMYC_CONF];
+      let angle = 0;
+      all.forEach(conf => {
+        const cnt = data.archCounts[conf.key] || 0;
+        if (cnt === 0) return;
+        const sweep = (cnt / total) * Math.PI * 2;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', arcPath(cx, cy, r, angle, angle + sweep));
+        path.setAttribute('fill', conf.color);
+        path.classList.add('pie-slice');
+        path.dataset.key = conf.key;
+        path.onclick = () => selectArch(conf.key, data);
+        svg.appendChild(path);
+        angle += sweep;
+      });
+
+      $('pie-total').textContent = total;
+
+      // 图例
+      const legend = $('legend');
+      legend.innerHTML = '';
+      all.forEach(conf => {
+        const cnt = data.archCounts[conf.key] || 0;
+        const pct = total > 0 ? (cnt / total * 100).toFixed(1) : '0.0';
+        const row = document.createElement('div');
+        row.className = 'legend-row';
+        row.dataset.key = conf.key;
+        row.innerHTML = `
+          <span class="legend-swatch" style="background:${conf.color}"></span>
+          <span class="legend-name">${conf.key}</span>
+          <span class="legend-stat">${cnt} 人 · ${pct}%</span>
+        `;
+        row.onclick = () => selectArch(conf.key, data);
+        legend.appendChild(row);
+      });
+    }
+
+    function selectArch(key, data) {
+      // Toggle
+      if (selectedArchKey === key) {
+        selectedArchKey = null;
+        $('detail-panel').classList.remove('open');
+        syncSelection();
+        return;
+      }
+      selectedArchKey = key;
+      renderDetailPanel(key, data);
+      $('detail-panel').classList.add('open');
+      syncSelection();
+    }
+
+    function syncSelection() {
+      document.querySelectorAll('.pie-slice').forEach(p => {
+        p.classList.toggle('selected', p.dataset.key === selectedArchKey);
+      });
+      document.querySelectorAll('.legend-row').forEach(r => {
+        r.classList.toggle('selected', r.dataset.key === selectedArchKey);
+      });
+    }
+
+    function renderDetailPanel(key, data) {
+      const body = $('detail-body');
+      const totalArch = data.archCounts[key] || 0;
+
+      if (key === SMYC_CONF.key) {
+        const r = RESULTS['SMYC'];
+        $('detail-title').textContent = '审美异常者（SMYC）';
+        $('detail-desc').textContent = (r && r.desc ? r.desc.split('\n').slice(-1)[0] : '系统识别到用户在 Q21 选择完全不认同，直接进入此词条。');
+        const pct = data.total > 0 ? (data.smycCount / data.total * 100).toFixed(1) : '0.0';
+        body.innerHTML = `
+          <div class="detail-single">
+            ${r && r.img ? `<img src="../${r.img}" alt="SMYC">` : ''}
+            <div class="big-num">${data.smycCount}</div>
+            <div style="font-size:0.78rem; opacity:0.75">位朋友触发了隐藏判定 · 占 ${pct}%</div>
+          </div>
+        `;
+        return;
+      }
+
+      const arc = ARCHETYPES[key];
+      const conf = ARCHETYPE_CONF.find(a => a.key === key);
+      $('detail-title').textContent = `${key} · ${arc ? arc.title : ''}`;
+      $('detail-desc').textContent = arc ? arc.desc : '';
+
+      const grid = document.createElement('div');
+      grid.className = 'detail-grid';
+      conf.codes.forEach(code => {
+        const r = RESULTS[code];
+        const cnt = data.counts[code] || 0;
+        const pct = data.total > 0 ? (cnt / data.total * 100).toFixed(1) : '0.0';
+        const cell = document.createElement('div');
+        cell.className = 'detail-cell';
+        cell.innerHTML = `
+          ${r && r.img ? `<img src="../${r.img}" alt="${r.name}">` : ''}
+          <div class="detail-cell-name">${(r && r.name) || code}</div>
+          <div class="detail-cell-pct">${cnt} 人 · ${pct}%</div>
+        `;
+        grid.appendChild(cell);
+      });
+      body.innerHTML = '';
+      body.appendChild(grid);
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // 渲染各页
+    // ═══════════════════════════════════════════════════════
+    function setPageBg(pageId, archetypeKey) {
+      const map = {
+        '信仰狂热型': 'bg-pink',
+        '低调洁癖型': 'bg-violet',
+        '混乱快乐型': 'bg-yellow',
+        '佛系体验型': 'bg-blue',
+      };
+      const cls = map[archetypeKey] || 'bg-cream';
+      const page = $(pageId);
+      page.className = 'page ' + cls;
+      page.dataset.idx = page.dataset.idx; // keep
+    }
+
+    function fillPersona(prefix, entries, total) {
+      if (!entries || !entries.length) return;
+      const count = entries[0][1];
+      const pct = total > 0 ? (count / total * 100).toFixed(1) : '0.0';
+
+      const codes = entries.map(e => e[0]).join(' · ');
+      const names = entries.map(e => {
+        const r = RESULTS[e[0]];
+        return (r && (r.name || r.cn)) || e[0];
+      }).join(' & ');
+
+      $(prefix + '-code').textContent = codes;
+      const nameEl = $(prefix + '-name');
+      nameEl.textContent = names;
+      
+      if (entries.length === 2) {
+        nameEl.style.setProperty('--name-scale', '0.8');
+      } else if (entries.length >= 3) {
+        nameEl.style.setProperty('--name-scale', '0.5');
+      } else {
+        nameEl.style.setProperty('--name-scale', '1');
+      }
+
+      const imgWrap = $(prefix + '-imgs');
+      imgWrap.innerHTML = '';
+      if (entries.length === 1) {
+        imgWrap.className = '';
+      } else {
+        imgWrap.className = 'persona-imgs-wrap';
+      }
+
+      entries.forEach(e => {
+        const r = RESULTS[e[0]];
+        if (r && r.img) {
+          const img = document.createElement('img');
+          img.src = '../' + r.img;
+          img.className = 'persona-img';
+          imgWrap.appendChild(img);
+        }
+      });
+
+      $(prefix + '-stat').textContent = entries.length > 1 ? `共并列 ${entries.length} 种 · 每种 ${count} 人` : `共 ${count} 人 · 占总数 ${pct}%`;
+    }
+
+    function pickTier(value, tiers, key) {
+      for (const t of tiers) {
+        if (key === 'min' && value >= t.min) return t.lines;
+        if (key === 'max' && value <= t.max) return t.lines;
+      }
+      return tiers[tiers.length - 1].lines;
+    }
+
+    function renderDim(pairKey, leftKey, rightKey, leftLabel, rightLabel, leftCnt, rightCnt, seed) {
+      const total = leftCnt + rightCnt;
+      const leftEl = $(`dim-${pairKey}-left`);
+      const rightEl = $(`dim-${pairKey}-right`);
+
+      if (total === 0) {
+        leftEl.innerHTML = `${leftLabel} 0%`;
+        rightEl.innerHTML = `${rightLabel} 0%`;
+        leftEl.style.setProperty('--lw', '1');
+        rightEl.style.setProperty('--rw', '1');
+        $(`dim-${pairKey}-verdict`).textContent = '还没有足够的数据。';
+        $(`dim-${pairKey}-quip`).textContent = '';
+        return;
+      }
+
+      const leftPct = leftCnt / total * 100;
+      const rightPct = 100 - leftPct;
+      leftEl.innerHTML = `${leftLabel} ${leftPct.toFixed(1)}%`;
+      rightEl.innerHTML = `${rightLabel} ${rightPct.toFixed(1)}%`;
+      leftEl.style.setProperty('--lw', leftPct.toFixed(3));
+      rightEl.style.setProperty('--rw', rightPct.toFixed(3));
+
+      const winSide = leftPct >= rightPct ? leftKey : rightKey;
+      const winPct = Math.max(leftPct, rightPct);
+
+      let tier;
+      if (winPct < 60) tier = 'tight';
+      else if (winPct < 75) tier = 'clear';
+      else if (winPct < 90) tier = 'strong';
+      else tier = 'landslide';
+
+      const lines = DIM_COPY[pairKey][winSide][tier];
+      const line = pickLine(lines, seed).replace('{pct}', winPct.toFixed(1));
+      $(`dim-${pairKey}-verdict`).innerHTML = line;
+
+      // 副锐评：换一条（seed+1）作为 quip
+      const other = pickLine(lines, seed + 1).replace('{pct}', winPct.toFixed(1));
+      $(`dim-${pairKey}-quip`).textContent = other === line ? '' : other;
+    }
+
+    function render(data) {
+      // 日期
+      const now = new Date();
+      $('today-date').textContent = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+
+      // 开场
+      $('total-count').textContent = data.total;
+
+      // 饼图
+      renderPie(data);
+
+      // 四大型锐评
+      const archSorted = Object.entries(data.archCounts).sort((a, b) => b[1] - a[1]);
+      const topArch = archSorted[0][0];
+      $('arch-quip').textContent = pickLine(ARCH_QUIP[topArch] || [], data.total);
+
+      // 最常见
+      if (data.mostCommon && data.mostCommon.length > 0) {
+        fillPersona('common', data.mostCommon, data.total);
+        const code = data.mostCommon[0][0];
+        const cnt = data.mostCommon[0][1];
+        const pct = cnt / data.total * 100;
+
+        if (data.mostCommon.length > 1) {
+          $('common-quip').textContent = `出现了并列第一！这几种人格并列最多，分别占总数的${pct.toFixed(1)}%；`;
+        } else {
+          const tier = pickTier(pct, COMMON_QUIP_TIERS, 'min');
+          $('common-quip').textContent = pickLine(tier, data.total);
+        }
+        setPageBg('page-common', RESULTS[code].archetype);
+      } else {
+        $('common-name').textContent = '暂无';
+        $('common-stat').textContent = '还没有人完成过测试';
+      }
+
+      // 最稀有
+      if (data.rarest && data.rarest.length > 0) {
+        fillPersona('rare', data.rarest, data.total);
+        const code = data.rarest[0][0];
+        const cnt = data.rarest[0][1];
+        const pct = cnt / data.total * 100;
+
+        let quip = '';
+        if (data.rarest.length > 1) {
+          quip = `竟然有并列最少的情况，原来稀有物种也并不孤单。以下人格分别只占总数的${pct.toFixed(1)}%`;
+        } else {
+          const tier = pickTier(cnt, RARE_QUIP_TIERS, 'max');
+          quip = pickLine(tier, data.total);
+        }
+
+        if (data.untestedCount > 0) {
+          quip += `（另有 ${data.untestedCount} 种人格至今无人触及。）`;
+        }
+        $('rare-quip').textContent = quip;
+        setPageBg('page-rare', RESULTS[code].archetype);
+      } else {
+        $('rare-name').textContent = '暂无';
+        $('rare-stat').textContent = '';
+      }
+
+      // 四维
+      renderDim('ZE', 'Z', 'E', '正义', '邪恶', data.dim.Z, data.dim.E, data.total);
+      renderDim('ND', 'N', 'D', '浓烈', '淡然', data.dim.N, data.dim.D, data.total);
+      renderDim('XL', 'X', 'L', '守序', '混乱', data.dim.X, data.dim.L, data.total);
+      renderDim('SH', 'S', 'H', '素食', '荤食', data.dim.S, data.dim.H, data.total);
+
+      // 终章
+      const finalR = RESULTS[data.overallCode];
+      $('final-code').textContent = data.overallCode;
+      if (finalR) {
+        $('final-name').textContent = finalR.name || finalR.cn || data.overallCode;
+        if (finalR.img) {
+          $('final-img').src = '../' + finalR.img;
+          $('final-img').style.display = 'block';
+        }
+        $('final-arc').textContent = finalR.archetype || '';
+        $('final-desc').textContent = (finalR.desc || '').split('\n').slice(-1)[0];
+        $('final-closer').textContent = pickLine(FINAL_CLOSER[finalR.archetype] || [], data.total);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // 翻页
+    // ═══════════════════════════════════════════════════════
+    function setupPaging() {
+      const pages = document.querySelectorAll('.page');
+      const dotsEl = $('dots');
+      pages.forEach((p, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'dot' + (i === 0 ? ' active' : '');
+        btn.onclick = () => p.scrollIntoView({ behavior: 'smooth' });
+        dotsEl.appendChild(btn);
+      });
+
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.intersectionRatio > 0.55) {
+            e.target.classList.add('visible');
+            const idx = parseInt(e.target.dataset.idx, 10);
+            document.querySelectorAll('.dot').forEach((d, i) => {
+              d.classList.toggle('active', i === idx);
+            });
+          }
+        });
+      }, { threshold: [0.55] });
+      pages.forEach(p => obs.observe(p));
+
+      pages[0].classList.add('visible');
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // 启动
+    // ═══════════════════════════════════════════════════════
+    (async () => {
+      try {
+        const rows = await fetchAll();
+        if (!rows.length) {
+          $('status').innerHTML = '<div><p>暂无数据<br><span style="opacity:0.5; font-size:0.8rem;">等第一位城堡批完成测试后再来看吧</span></p></div>';
+          return;
+        }
+        const data = analyze(rows);
+        render(data);
+        setupPaging();
+        setTimeout(() => $('status').classList.add('hidden'), 300);
+      } catch (err) {
+        $('status').innerHTML = `<div><p>加载失败<br><span style="opacity:0.5; font-size:0.8rem;">${err.message}</span></p></div>`;
+      }
+    })();
   </script>
 </body>
+
 </html>
