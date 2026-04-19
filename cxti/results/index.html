@@ -587,7 +587,7 @@
         <p class="label">C(X)TI · 城堡群像报告</p>
         <p class="sub">截至 <span id="today-date"></span>，共有</p>
         <h1 class="huge-num" id="total-count">—</h1>
-        <p class="sub">位城堡批<br>留下了他们的成分鉴定</p>
+        <p class="sub">位城堡粉丝<br>留下了他们的成分鉴定</p>
         <p class="quip">下面，让我们看看这个群体<br>到底长什么样 ——</p>
       </div>
       <div class="hint">↓ 上滑翻页</div>
@@ -786,7 +786,7 @@
             '{pct}% vs 剩下：看起来平分秋色，但浓度派其实在偷偷数。'
           ],
           clear: [
-            '{pct}% 的城堡批是浓度派：没饭就约稿。',
+            '{pct}% 的浓烈派：没饭就约稿。',
             '产粮焦虑症席卷了 {pct}% 的人。'
           ],
           strong: [
@@ -898,7 +898,7 @@
     const ARCH_QUIP = {
       '信仰狂热型': [
         '我们中最多的是原教旨主义者 —— 城堡就该锁死，这是最大群体的共识。',
-        '这个圈子的信仰感依然是主流 —— 城堡批的底色。'
+        '这个圈子的信仰感依然是主流 —— 城堡粉丝的底色。'
       ],
       '低调洁癖型': [
         '最多的是隐士党 —— 默默爱、默默嗑，从不发声但从未离开。',
@@ -932,7 +932,7 @@
 
     const FINAL_CLOSER = {
       '信仰狂热型': [
-        '原来我们整体而言，是一个虔诚的信徒 —— 城堡批本色。',
+        '原来我们整体而言，是一个虔诚的信徒 —— 城堡粉丝本色。',
         '城堡即信仰 —— 这份报告证明了。'
       ],
       '低调洁癖型': [
@@ -1176,7 +1176,7 @@
       $(prefix + '-code').textContent = codes;
       const nameEl = $(prefix + '-name');
       nameEl.textContent = names;
-      
+
       if (entries.length === 2) {
         nameEl.style.setProperty('--name-scale', '0.8');
       } else if (entries.length >= 3) {
