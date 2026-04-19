@@ -35,7 +35,7 @@ const RESULTS = {
     cn: '正浓乱荤',
     name: '魅魔臣仆',
     archetype: '混乱快乐型',
-    desc: '主题曲：rhythm after summer\n彼此交融 我们成为一体\n——爸红误入公共浴室，两人害怕得开始砰了',
+    desc: '主题曲：rhythm after summer\n彼此交融 我们成为一体\n——俩猫误入公共浴室，害怕得开始砰了',
     color: '#F2C12E', text: '#1A3560',
     img: 'images/ZNLH.jpg'
   },
@@ -43,7 +43,7 @@ const RESULTS = {
     cn: '正浓序素',
     name: '城堡卫士',
     archetype: '信仰狂热型',
-    desc: '主题曲：love is u\n你是比星辰更闪耀的暮光\n——鉴定为赛级爸红丝，完全正心诚意地爱着爸妈，笑与泪都是珍藏',
+    desc: '主题曲：love is u\n你是比星辰更闪耀的暮光\n——鉴定为赛级粉丝，完全正心诚意地爱着爸妈，笑与泪都是珍藏',
     color: '#F2C12E', text: '#1A3560',
     img: 'images/ZNXS.jpg'
   },
