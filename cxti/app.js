@@ -46,6 +46,28 @@ const CODE_DIM_MAP = {
   X: '守序', L: '混乱', S: '素食', H: '荤食'
 };
 
+// ── Supabase 匿名统计配置 ─────────────────────────────────
+// 作者：在 supabase.com 建 project 后，把 Project URL 和 anon key 填入下面
+const SUPABASE_URL = 'https://qhraciuakpecdzztfkfk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFocmFjaXVha3BlY2R6enRma2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODIzODUsImV4cCI6MjA5MjE1ODM4NX0.f36pZzpk0r7Ha7znWG_yzdmEjjP992TSq7YRxw6-fdc';
+
+function reportResult(code) {
+  if (localStorage.getItem('cxti_submitted')) return;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+  fetch(`${SUPABASE_URL}/rest/v1/results`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ code })
+  })
+    .then(res => { if (res.ok) localStorage.setItem('cxti_submitted', code); })
+    .catch(() => {});
+}
+
 // ── Quiz State ────────────────────────────────────────────
 let state = {
   index: 0,
@@ -215,6 +237,7 @@ function showResult() {
 }
 
 function renderResult(code, result) {
+  reportResult(code);
   const card = $('result-card');
 
   // 配色：按四大型
