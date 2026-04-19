@@ -1,5 +1,5 @@
 // ============================================================
-// C(X)TI-CP粉属性测试 · Omega Engine (OMG版)
+// C(X)TI-CP粉属性测试 · 正式版
 // ============================================================
 
 'use strict';
@@ -24,16 +24,34 @@ const DIM_LABELS = {
   D: { pos: '素食', neg: '荤食', codePos: 'S', codeNeg: 'H', descPos: '倾向于清水或者纯爱，情感链接比肉体重要。', descNeg: '开车！开车！给我像红牛和梅奔一样冲！！' },
 };
 
+// ── 四大型配色（按 archetype 分，替代原按字母分的配色）────
+const ARCHETYPE_COLORS = {
+  '信仰狂热型': { bg: '#F5BEC1', text: '#1A3560' },  // 淡玫红
+  '低调洁癖型': { bg: '#CBC4E6', text: '#1A3560' },  // 淡紫
+  '混乱快乐型': { bg: '#F6E5A5', text: '#1A3560' },  // 淡黄
+  '佛系体验型': { bg: '#BDD0EE', text: '#1A3560' },  // 淡蓝
+};
+
+// ── 画廊布局配置 ──────────────────────────────────────────
+const GALLERY_ROWS = [
+  { archetype: '信仰狂热型', codes: ['ZNXS', 'ZNXH', 'ENXS', 'ENXH'], colorClass: 'arc-red' },
+  { archetype: '低调洁癖型', codes: ['ZDXS', 'ZDXH', 'EDXS', 'EDXH'], colorClass: 'arc-purple' },
+  { archetype: '混乱快乐型', codes: ['ZNLS', 'ZNLH', 'ENLS', 'ENLH'], colorClass: 'arc-yellow' },
+  { archetype: '佛系体验型', codes: ['ZDLS', 'ZDLH', 'EDLS', 'EDLH'], colorClass: 'arc-blue' },
+];
+
+// ── 人格编码字母 → 维度名称 ──────────────────────────────
+const CODE_DIM_MAP = {
+  Z: '正义', E: '邪恶', N: '浓烈', D: '淡然',
+  X: '守序', L: '混乱', S: '素食', H: '荤食'
+};
+
 // ── Quiz State ────────────────────────────────────────────
 let state = {
   index: 0,
   queue: [],
-  history: [],      // Elements: { tags: [], isFeedbackSkipped: boolean }
+  history: [],   // Elements: { tags: [] }
   nickname: '',
-  feedback: {},     // { questionId: "feedback text" } (E option)
-  likes: {},        // { questionId: true }
-  dislikes: {},     // { questionId: true }
-  overallRating: '',
   resultCode: '',
   scores: {
     A: { pos: 0, neg: 0 },
@@ -41,8 +59,6 @@ let state = {
     C: { pos: 0, neg: 0 },
     D: { pos: 0, neg: 0 },
   },
-  pendingOpt: null,
-  pendingE: false
 };
 
 // ── Fisher-Yates shuffle ──────────────────────────────────
@@ -98,43 +114,33 @@ function resetState() {
     queue: [...shuffle(normal), ...special],
     history: [],
     nickname: rawNick === '' ? '不愿透露姓名的城堡批' : rawNick,
-    feedback: {},
-    likes: {},
-    dislikes: {},
-    overallRating: '',
     resultCode: '',
     scores: {
       A: { pos: 0, neg: 0 }, B: { pos: 0, neg: 0 }, C: { pos: 0, neg: 0 }, D: { pos: 0, neg: 0 }
     },
-    pendingOpt: null,
-    pendingE: false
   };
 }
 
 function renderQuestion() {
+  if (document.activeElement) {
+    document.activeElement.blur();
+  }
+
   const q = state.queue[state.index];
   const total = state.queue.length;
-
-  state.pendingOpt = null;
-  state.pendingE = false;
 
   // Progress
   const pct = (state.index / total) * 100;
   $('progress-fill').style.width = pct + '%';
   $('progress-label').textContent = `${state.index + 1} / ${total}`;
 
-  $('question-id').textContent = 'Q' + (state.index + 1);
+  $('question-id').textContent = q.id;
   $('question-text').textContent = q.text;
 
   // Back button visibility
   $('btn-prev').style.display = state.index === 0 ? 'none' : 'flex';
 
-  // Reset Feedback UI (E option)
-  $('btn-e-option').classList.remove('active');
-  $('e-feedback-area').classList.remove('active');
-  $('e-feedback-input').value = state.feedback[q.id] || '';
-
-  // Render options
+  // Render options — click directly scores and advances
   const list = $('options-list');
   list.innerHTML = '';
   q.options.forEach(opt => {
@@ -143,58 +149,12 @@ function renderQuestion() {
     btn.innerHTML = `<span class="opt-label">${opt.label}</span><span>${opt.text}</span>`;
 
     btn.onclick = () => {
-      list.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      state.pendingOpt = opt;
-      state.pendingE = false;
-      $('btn-e-option').classList.remove('active');
-      $('e-feedback-area').classList.remove('active');
-    };
-    list.appendChild(btn);
-  });
-}
-
-function submitQuestion(action) {
-  const q = state.queue[state.index];
-  let isE = state.pendingE;
-  let opt = state.pendingOpt;
-  let feedbackText = $('e-feedback-input').value.trim();
-
-  // Validate choice is made
-  if (!isE && !opt) {
-    const list = $('options-list');
-    list.classList.add('shake');
-    setTimeout(() => list.classList.remove('shake'), 400);
-    return;
-  }
-  if (isE && feedbackText.length === 0) {
-    const area = $('e-feedback-area');
-    area.classList.add('shake');
-    setTimeout(() => area.classList.remove('shake'), 400);
-    return;
-  }
-
-  // Handle Action
-  if (action === 'like') {
-    state.likes[q.id] = true;
-    state.dislikes[q.id] = false;
-  } else if (action === 'dislike') {
-    state.dislikes[q.id] = true;
-    state.likes[q.id] = false;
-  }
-
-  setTimeout(() => {
-    if (isE) {
-      state.feedback[q.id] = feedbackText;
-      state.history.push({ tags: [], isFeedbackSkipped: true });
-      advance();
-    } else {
-      // Handle special Q36 (now Q25)
+      // 特判 SMYC
       if (q.special && opt.label === 'D') {
         renderResult('SMYC', RESULTS['SMYC']);
         return;
       }
-
+      // 计分
       opt.tags.forEach(tag => {
         const m = TAG_MAP[tag];
         if (m) {
@@ -202,10 +162,11 @@ function submitQuestion(action) {
           else state.scores[m.dim].neg++;
         }
       });
-      state.history.push({ tags: opt.tags.slice(), isFeedbackSkipped: false });
+      state.history.push({ tags: opt.tags.slice() });
       advance();
-    }
-  }, 100);
+    };
+    list.appendChild(btn);
+  });
 }
 
 function advance() {
@@ -222,7 +183,7 @@ function handlePrev() {
   state.index--;
 
   const last = state.history.pop();
-  if (last && !last.isFeedbackSkipped) {
+  if (last) {
     // Reverse scores
     last.tags.forEach(tag => {
       const m = TAG_MAP[tag];
@@ -233,7 +194,6 @@ function handlePrev() {
     });
   }
 
-  // Do NOT remove feedback/likes/dislikes on prev to allow correction
   renderQuestion();
 }
 
@@ -256,13 +216,19 @@ function showResult() {
 
 function renderResult(code, result) {
   const card = $('result-card');
-  card.style.backgroundColor = result.color;
-  card.style.color = result.text;
+
+  // 配色：按四大型
+  if (code === 'SMYC') {
+    card.style.backgroundColor = result.color;
+    card.style.color = result.text;
+  } else {
+    const arcColors = ARCHETYPE_COLORS[result.archetype] || { bg: result.color, text: result.text };
+    card.style.backgroundColor = arcColors.bg;
+    card.style.color = arcColors.text;
+  }
 
   $('result-nickname').textContent = state.nickname;
   $('result-name').textContent = result.name || result.cn;
-  $('result-cn').textContent = result.cn;
-  $('result-code').textContent = code;
 
   const imgWrap = $('result-img-wrap');
   if (result.img) {
@@ -274,21 +240,19 @@ function renderResult(code, result) {
 
   $('result-desc').textContent = result.desc;
 
-  // Archetype (Centered)
+  // Archetype
   const isSMYC = (code === 'SMYC');
   const arcName = result.archetype;
 
   if (isSMYC) {
-    // Hidden Identity Rendering
     $('archetype-section').querySelector('.archetype-prefix').textContent = '';
     $('archetype-tag').textContent = '审美异常者';
     $('archetype-title').textContent = '你不属于四大类型之一';
     $('archetype-title').style.display = 'block';
-    $('archetype-desc').textContent = '系统识别到用户在“Hey Mama是金钟大最不可理喻的造型”一题中选择了“完全不认同”，直接触发隐藏判定，无视其他条件直接进入此词条。';
+    $('archetype-desc').textContent = '系统识别到用户在"Hey Mama是金钟大最不可理喻的造型"一题中选择了"完全不认同"，触发隐藏判定，无视其他条件直接进入此词条。';
     $('btn-expand-arc').textContent = '点击查看其他四大型说明';
     $('archetype-section').style.display = 'block';
   } else {
-    // Normal Identity Rendering
     const arc = ARCHETYPES[arcName];
     if (arc) {
       $('archetype-section').querySelector('.archetype-prefix').textContent = '你属于四大类型中的：';
@@ -302,28 +266,22 @@ function renderResult(code, result) {
     }
   }
 
-  // Expansion list logic
+  // Expansion list
   const otherArcsWrap = $('other-arcs-wrap');
   otherArcsWrap.style.display = 'none';
-
   otherArcsWrap.innerHTML = '';
   Object.keys(ARCHETYPES).forEach(key => {
-    // If SMYC, show all four; If normal, show other three
     if (!key.startsWith('@') && (isSMYC || key !== arcName)) {
       const data = ARCHETYPES[key];
       const item = document.createElement('div');
       item.className = 'other-arc-item';
       item.innerHTML = `
-              <span class="other-arc-tag">${key} · ${data.title}</span>
-              <p class="other-arc-desc">${data.desc}</p>
-          `;
+        <span class="other-arc-tag">${key} · ${data.title}</span>
+        <p class="other-arc-desc">${data.desc}</p>
+      `;
       otherArcsWrap.appendChild(item);
     }
   });
-
-  // Reset rating selection
-  state.overallRating = '';
-  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
 
   // Dimensions
   renderDimensionBars();
@@ -349,6 +307,10 @@ function renderDimensionBars() {
     const totalRate = pRate + nRate;
     const barPct = totalRate > 0 ? (nRate / totalRate) * 100 : 50;
 
+    // 两侧百分比在该维度对内合计为100%
+    const pPct = totalRate > 0 ? Math.round((pRate / totalRate) * 100) : 50;
+    const nPct = 100 - pPct;
+
     const item = document.createElement('div');
     item.className = 'dim-item';
     const fillStyle = isPos
@@ -357,8 +319,8 @@ function renderDimensionBars() {
 
     item.innerHTML = `
       <div class="dim-bar-header">
-        <span class="dim-label ${isPos ? 'active' : ''}">${dim.pos}</span>
-        <span class="dim-label ${!isPos ? 'active' : ''}">${dim.neg}</span>
+        <span class="dim-label ${isPos ? 'active' : ''}">${dim.pos}（${pPct}%）</span>
+        <span class="dim-label ${!isPos ? 'active' : ''}">${dim.neg}（${nPct}%）</span>
       </div>
       <div class="dim-track">
         <div class="dim-fill" style="${fillStyle}"></div>
@@ -369,39 +331,117 @@ function renderDimensionBars() {
   });
 }
 
-// ── Copy Feedback ─────────────────────────────────────────
+// ── All Profiles Gallery ──────────────────────────────────
 
-function copyFeedback() {
-  const ratingText = state.overallRating || "(未评)";
-  let text = `${state.resultCode} ${ratingText}\n`;
+function renderAllProfiles() {
+  const gallery = $('profiles-gallery');
+  gallery.innerHTML = '';
 
-  const liked = Object.keys(state.likes).filter(k => state.likes[k]).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
-  const disliked = Object.keys(state.dislikes).filter(k => state.dislikes[k]).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
-  const answers = Object.keys(state.feedback).filter(k => state.feedback[k]).sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
+  // 四大型行
+  GALLERY_ROWS.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = `archetype-row ${row.colorClass}`;
 
-  text += `喜欢的题：${liked.length > 0 ? liked.join(',') : '无'}\n`;
-  text += `不喜欢的题：${disliked.length > 0 ? disliked.join(',') : '无'}\n`;
-
-  if (answers.length > 0) {
-    text += `其他答案：\n`;
-    answers.forEach(qid => {
-      text += `${qid}: ${state.feedback[qid]}\n`;
+    const grid = document.createElement('div');
+    grid.className = 'profiles-grid';
+    row.codes.forEach(code => {
+      const r = RESULTS[code];
+      const thumb = document.createElement('div');
+      thumb.className = 'profile-thumb';
+      thumb.innerHTML = `
+        <img src="${r.img}" alt="${r.name}" class="thumb-img">
+        <span class="thumb-name">${r.name}</span>
+      `;
+      thumb.onclick = () => openProfileDetail(code);
+      grid.appendChild(thumb);
     });
+    rowEl.appendChild(grid);
+    gallery.appendChild(rowEl);
+  });
+
+  // SMYC 行（灰色，标签为 ？？？？？）
+  const smycRow = document.createElement('div');
+  smycRow.className = 'archetype-row arc-grey';
+
+  const smycGrid = document.createElement('div');
+  smycGrid.className = 'profiles-grid';
+
+  const smycThumb = document.createElement('div');
+  smycThumb.className = 'profile-thumb';
+  smycThumb.innerHTML = `
+    <img src="${RESULTS['SMYC'].img}" alt="？" class="thumb-img">
+    <span class="thumb-name">？？？？？</span>
+  `;
+  smycThumb.onclick = () => openProfileDetail('SMYC_GALLERY');
+  smycGrid.appendChild(smycThumb);
+  smycRow.appendChild(smycGrid);
+  gallery.appendChild(smycRow);
+
+  showScreen('screen-all-profiles');
+}
+
+function openProfileDetail(code) {
+  const isSmycGallery = (code === 'SMYC_GALLERY');
+  const r = isSmycGallery ? RESULTS['SMYC'] : RESULTS[code];
+  const card = $('profile-detail-card');
+
+  // 配色：按四大型
+  if (isSmycGallery) {
+    card.style.backgroundColor = r.color;
+    card.style.color = r.text;
   } else {
-    text += `其他答案：无\n`;
+    const arcColors = ARCHETYPE_COLORS[r.archetype] || { bg: r.color, text: r.text };
+    card.style.backgroundColor = arcColors.bg;
+    card.style.color = arcColors.text;
   }
 
-  navigator.clipboard.writeText(text).then(() => {
-    const toast = $('toast');
-    toast.classList.add('active');
-    setTimeout(() => toast.classList.remove('active'), 2000);
-  });
+  // 标题
+  $('detail-name').textContent = isSmycGallery ? '？？？？？' : r.name;
+
+  // 图片
+  const imgWrap = $('detail-img-wrap');
+  if (r.img) {
+    imgWrap.innerHTML = `<img src="${r.img}" alt="${r.name}" class="result-img">`;
+    imgWrap.style.display = 'block';
+  } else {
+    imgWrap.style.display = 'none';
+  }
+
+  // 描述
+  $('detail-desc').textContent = isSmycGallery
+    ? '主题曲：？？？？？！——？？？？！？？？？？？？！'
+    : r.desc;
+
+  // 四大型部分
+  const arcSection = $('detail-archetype-section');
+  const arcPrefix = arcSection.querySelector('.archetype-prefix');
+  if (isSmycGallery) {
+    arcPrefix.textContent = '';
+    $('detail-archetype-tag').textContent = '你不属于四大类型之一';
+    $('detail-archetype-desc').textContent = '系统识别到用户在部分题目中选择异常，触发隐藏判定，无视其他条件直接进入此词条。';
+  } else {
+    arcPrefix.textContent = '所属四大型：';
+    const arc = ARCHETYPES[r.archetype];
+    $('detail-archetype-tag').textContent = `${r.archetype} · ${arc ? arc.title : ''}`;
+    $('detail-archetype-desc').textContent = arc ? arc.desc : '';
+  }
+
+  // 八维倾向（文字版）
+  const dimsEl = $('detail-dims-text');
+  if (isSmycGallery) {
+    dimsEl.textContent = '八维倾向：？？？？？';
+  } else {
+    const dims = code.split('').map(c => CODE_DIM_MAP[c] || c).join('，');
+    dimsEl.textContent = `八维倾向：${dims}`;
+  }
+
+  showScreen('screen-profile-detail');
 }
 
 // ── Init ──────────────────────────────────────────────────
 
 function init() {
-  $('q-stats').textContent = `31题，4大维度，17种结果（含1种隐藏人格）`;
+  $('q-stats').textContent = `${QUESTIONS.length}题，4大维度，17种结果（含1种隐藏人格）`;
 
   $('btn-start').onclick = () => {
     resetState();
@@ -411,26 +451,6 @@ function init() {
 
   $('btn-prev').onclick = handlePrev;
   $('btn-retry').onclick = () => showScreen('screen-start');
-  $('btn-copy-feedback').onclick = copyFeedback;
-
-  // Bottom Feedback Actions
-  $('btn-q-like').onclick = () => submitQuestion('like');
-  $('btn-q-dislike').onclick = () => submitQuestion('dislike');
-  $('btn-q-next').onclick = () => submitQuestion('next');
-
-  // E Feedback Toggle
-  $('btn-e-option').onclick = () => {
-    const isActive = $('btn-e-option').classList.toggle('active');
-    $('e-feedback-area').classList.toggle('active', isActive);
-    if (isActive) {
-      $('options-list').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-      state.pendingOpt = null;
-      state.pendingE = true;
-      $('e-feedback-input').focus();
-    } else {
-      state.pendingE = false;
-    }
-  };
 
   // Archetype expand toggle
   $('btn-expand-arc').onclick = () => {
@@ -439,15 +459,6 @@ function init() {
     wrap.style.display = isHidden ? 'block' : 'none';
     $('btn-expand-arc').textContent = isHidden ? '收起' : '查看其他三大型';
   };
-
-  // Overall Rating buttons
-  document.querySelectorAll('.rating-btn').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      state.overallRating = btn.getAttribute('data-val');
-    };
-  });
 
   // Image Save
   $('btn-save-img').onclick = function () {
@@ -462,11 +473,8 @@ function init() {
     }).then(canvas => {
       try {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
-
-        // 显示预览层供移动端长按保存
         $('overlay-img-container').innerHTML = `<img src="${dataUrl}" alt="Result">`;
         $('result-overlay').style.display = 'flex';
-
       } catch (e) {
         alert('由于浏览器安全限制，图片生成失败。您可以尝试截图保存。');
       }
@@ -480,6 +488,11 @@ function init() {
   $('btn-close-overlay').onclick = () => {
     $('result-overlay').style.display = 'none';
   };
+
+  // Gallery navigation
+  $('btn-view-profiles').onclick = () => renderAllProfiles();
+  $('btn-back-to-result').onclick = () => showScreen('screen-result');
+  $('btn-back-to-profiles').onclick = () => showScreen('screen-all-profiles');
 }
 
 document.addEventListener('DOMContentLoaded', init);

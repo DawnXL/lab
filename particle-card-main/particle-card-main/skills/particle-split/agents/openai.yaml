@@ -1,0 +1,9 @@
+﻿interface:
+  display_name: "Particle Split"
+  short_description: "优化 particle.html 粒子分裂：交互、裁剪、性能与移动端"
+  brand_color: "#4a3b2c"
+  default_prompt: "使用 $particle-split 帮我改进 particle.html 的粒子分裂效果与性能。"
+
+policy:
+  allow_implicit_invocation: true
+

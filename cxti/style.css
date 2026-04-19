@@ -358,127 +358,6 @@ body {
   background: var(--blue-dark);
 }
 
-/* ── Feedback Area ── */
-
-.e-option-wrap {
-  margin-top: 12px;
-}
-
-.option-e-btn {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  background: transparent;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: var(--muted);
-  text-align: left;
-}
-
-.option-e-btn.active {
-  border-color: var(--blue);
-  border-style: solid;
-  background: var(--blue-dim);
-  color: var(--blue-dark);
-}
-
-.opt-e-label {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--muted);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 900;
-}
-
-.option-e-btn.active .opt-e-label {
-  background: var(--blue-dark);
-}
-
-.e-feedback-area {
-  margin-top: 10px;
-  padding: 14px;
-  background: #f7f5ef;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  display: none;
-}
-
-.e-feedback-area.active {
-  display: block;
-}
-
-.e-feedback-area textarea {
-  width: 100%;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-family: inherit;
-  font-size: 0.88rem;
-  color: var(--text);
-  resize: none;
-  min-height: 70px;
-  line-height: 1.6;
-}
-
-.e-feedback-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 10px;
-}
-
-.e-feedback-actions button {
-  font-size: 0.75rem;
-  padding: 6px 16px;
-  border-radius: 99px;
-  cursor: pointer;
-  border: none;
-  font-weight: 500;
-}
-
-.e-btn-skip {
-  background: #e6e3d8;
-  color: var(--muted);
-  transition: all 0.2s;
-}
-
-.e-btn-skip.selected {
-  background: var(--muted);
-  color: #fff;
-}
-
-.e-btn-submit {
-  background: var(--blue);
-  color: #fff;
-  transition: all 0.2s;
-}
-
-.e-btn-submit.selected {
-  background: var(--blue-dark);
-}
-
-.shake {
-  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
-}
-
-@keyframes shake {
-  10%, 90% { transform: translate3d(-1px, 0, 0); }
-  20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
-}
-
-/* 导航按钮已移除，改为点击选项自动跳转 */
 
 /* ═══════════════════════════════════════════════════════
    RESULT SCREEN
@@ -523,20 +402,6 @@ body {
   margin-bottom: 2px;
 }
 
-.result-cn {
-  font-size: 0.85rem;
-  letter-spacing: 0.2em;
-  opacity: 0.6;
-  margin-bottom: 6px;
-}
-
-.result-code {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.3em;
-  opacity: 0.4;
-  margin-bottom: 24px;
-}
 
 .result-img-wrap {
   margin: 0 auto 28px;
@@ -736,22 +601,6 @@ body {
   width: 100%;
 }
 
-.btn-copy-feedback {
-  background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  color: inherit;
-  width: 100%;
-  padding: 12px;
-  line-height: 1.4;
-}
-
-.btn-subtext {
-  font-size: 0.75rem;
-  opacity: 0.7;
-  font-weight: normal;
-  display: block;
-  margin-top: 4px;
-}
 
 .btn-retry {
   background: transparent;
@@ -840,85 +689,116 @@ body {
   cursor: pointer;
 }
 
-/* ── Result Rating ── */
+/* ══════════════════════════════════════════════════════════
+   ALL PROFILES GALLERY
+   ══════════════════════════════════════════════════════════ */
 
-.overall-rating-wrap {
-  margin-top: 32px;
-  margin-bottom: 32px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255,255,255,0.2);
+.profiles-page {
+  padding: 24px 0 40px;
 }
 
-.rating-title {
-  font-size: 1rem;
+.profiles-page-title {
+  text-align: center;
+  font-size: 1.3rem;
   font-weight: 700;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  color: var(--text);
 }
 
-.rating-btns {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
-.rating-btn {
-  background: rgba(255,255,255,0.2);
-  border: none;
+.archetype-row {
   border-radius: var(--radius-sm);
-  padding: 12px 16px;
+  margin-bottom: 12px;
+  padding: 8px;
+}
+
+.arc-red    { background: #F5BEC1; }
+.arc-purple { background: #CBC4E6; }
+.arc-yellow { background: #F6E5A5; }
+.arc-blue   { background: #BDD0EE; }
+.arc-grey   { background: #D8D8D8; }
+
+.profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.profile-thumb {
   cursor: pointer;
-  color: inherit;
-  font-family: inherit;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
-  max-width: 80px;
-  transition: all 0.2s;
-}
-
-.rating-btn.active {
-  background: #1A3560;
-  color: #fff;
-  transform: scale(1.05);
-}
-
-.rating-emoji {
-  font-size: 1.4rem;
-}
-
-/* ── Bottom Feedback ── */
-
-.bottom-feedback-actions {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.feedback-action-btn {
-  font-size: 1.1rem;
-  padding: 10px 16px;
+  text-align: center;
   border-radius: 8px;
-  border: 1px solid var(--border);
-  background-color: transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.5);
+  transition: transform 0.15s;
+}
+
+.profile-thumb:active {
+  transform: scale(0.96);
+}
+
+.thumb-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb-name {
+  display: block;
+  font-size: 0.7rem;
+  padding: 4px 2px;
   font-weight: 700;
   color: var(--text);
-  opacity: 0.8;
 }
 
-.feedback-action-btn:hover {
-  background-color: var(--blue-dim);
-  border-color: var(--blue);
-  color: var(--blue-dark);
-  opacity: 1;
+#btn-back-to-result {
+  display: block;
+  margin: 24px auto 0;
+  width: 100%;
+  max-width: 320px;
 }
 
-.feedback-action-btn:active {
-  transform: scale(0.95);
+/* ══════════════════════════════════════════════════════════
+   PROFILE DETAIL
+   ══════════════════════════════════════════════════════════ */
+
+.profile-detail-card {
+  padding: 40px 24px 40px;
+  text-align: center;
+  border-radius: var(--radius);
+  min-height: 100%;
+}
+
+.detail-name {
+  font-size: 2.6rem;
+  font-weight: 900;
+  margin-bottom: 24px;
+}
+
+.detail-dims-text {
+  font-size: 0.88rem;
+  opacity: 0.75;
+  margin: 20px 0;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+}
+
+#btn-back-to-profiles {
+  display: block;
+  margin: 24px auto 0;
+  width: 100%;
+  max-width: 320px;
+}
+
+/* ── 署名信息 ────────────────────────────────────────────── */
+
+.credits-text {
+  font-size: 0.65rem;
+  color: rgba(0, 0, 0, 0.28);
+  text-align: center;
+  line-height: 2;
+  margin-top: 28px;
+  font-weight: 400;
 }

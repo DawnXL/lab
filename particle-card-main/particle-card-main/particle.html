@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>分裂圆·像素贺卡 | 交互式图像分解艺术</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #cbd5e1 0%, #e2e8f0 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Quicksand', system-ui, -apple-system, 'Inter', sans-serif;
+            padding: 20px;
+            cursor: default;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            background-color: #fef9f0;
+            border-radius: 12px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            gap: 24px;
+        }
+
+        .top-section {
+            display: flex;
+            width: 100%;
+            gap: 24px;
+        }
+
+        .left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        canvas {
+            display: block;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            height: auto;
+            background: #f1ede7;
+            transition: filter 0.2s;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5" fill="none" stroke="%234a3b2c" stroke-width="1.5"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="%234a3b2c" stroke-width="1" opacity="0.5"/></svg>') 12 12, crosshair;
+        }
+
+        #imageUpload {
+            margin-top: 20px;
+            padding: 8px 16px;
+            border: 1px solid #d9c8b2;
+            border-radius: 20px;
+            background: #f6efe5;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #imageUpload:hover {
+            background: #e9dfd0;
+        }
+
+        .right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .right h1 {
+            font-size: 2.5rem;
+            color: #4a3b2c;
+            margin-bottom: 8px;
+            font-weight: 400;
+            font-style: italic;
+            cursor: text;
+        }
+
+        .right p {
+            font-size: 1.2rem;
+            color: #7f6954;
+            line-height: 1.6;
+            font-style: italic;
+            cursor: text;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+            .right h1 {
+                font-size: 2rem;
+            }
+        }
+
+        #uploadBtn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #4a3b2c;
+            transition: transform 0.2s;
+        }
+
+        #uploadBtn:hover {
+            transform: scale(1.1);
+        }
+
+        /* 图片裁剪模态框 */
+        .crop-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .crop-modal.active {
+            display: flex;
+        }
+
+        .crop-container {
+            background: #fef9f0;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .crop-title {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: #4a3b2c;
+            font-style: italic;
+        }
+
+        .crop-canvas-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 0 auto 16px;
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+
+        #cropImage {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .crop-box {
+            position: absolute;
+            border: 2px solid #4a3b2c;
+            background: rgba(74, 59, 44, 0.1);
+            cursor: move;
+            box-sizing: border-box;
+        }
+
+        .crop-box-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #4a3b2c;
+            border-radius: 50%;
+            cursor: nwse-resize;
+        }
+
+        .crop-box-handle.se {
+            right: -6px;
+            bottom: -6px;
+        }
+
+        .crop-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .crop-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 500;
+        }
+
+        .crop-btn-confirm {
+            background: #d9c8b2;
+            color: #4a3b2c;
+        }
+
+        .crop-btn-confirm:hover {
+            background: #cfbea6;
+        }
+
+        .crop-btn-cancel {
+            background: #f6efe5;
+            color: #7f6954;
+        }
+
+        .crop-btn-cancel:hover {
+            background: #e9dfd0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="top-section">
+        <div class="left">
+            <div class="canvas-wrapper">
+                <canvas id="fractalCanvas" width="700" height="700" style="width:100%; height:auto; max-width:700px; aspect-ratio:1"></canvas>
+            </div>
+        </div>
+        <div class="right">
+            <h1 contenteditable="true">Splitting Circles · Pixel Card</h1>
+            <p contenteditable="true">Hover over circles to split them into four colorful smaller ones, each displaying the pixel color from the image.</p>
+        </div>
+    </div>
+    <div class="upload-section">
+        <button id="uploadBtn">📷</button>
+        <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+    </div>
+</div>
+
+<!-- 图片裁剪模态框 -->
+<div class="crop-modal" id="cropModal">
+    <div class="crop-container">
+        <div class="crop-title">选择你想要的正方形部分</div>
+        <div class="crop-canvas-wrapper">
+            <img id="cropImage" alt="crop image">
+            <div class="crop-box" id="cropBox">
+                <div class="crop-box-handle se" id="cropHandle"></div>
+            </div>
+        </div>
+        <div class="crop-buttons">
+            <button class="crop-btn crop-btn-confirm" id="confirmCrop">确认</button>
+            <button class="crop-btn crop-btn-cancel" id="cancelCrop">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ---------- 配置参数 ----------
+        const canvas = document.getElementById('fractalCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageUpload = document.getElementById('imageUpload');
+        const uploadBtn = document.getElementById('uploadBtn');
+        let img = new Image();
+        img.crossOrigin = "Anonymous";
+        
+        // 全局变量
+        let circles = [];           // 存储所有圆 {x, y, r}
+        let imgData = null;         // ImageData 像素数组
+        let imgWidth = 700, imgHeight = 700;   // 固定正方形尺寸
+        let imageLoaded = false;
+        let animationFramePending = false;
+        let lastSplitTime = 0;
+        
+        // 分裂最小半径阈值（小于该半径不再分裂，保证最终清晰且性能良好）
+        const MIN_RADIUS = 4.0;      // 4px 以下肉眼基本构成清晰像素点阵，图片细节可辨
+        
+        // ---------- 辅助函数: 从ImageData获取像素颜色 (RGBA) ----------
+        function getPixelColor(x, y) {
+            if (!imgData) return 'rgba(180, 160, 140, 0.8)'; // fallback 暖灰色
+            // 边界保护
+            const ix = Math.floor(Math.min(Math.max(0, x), imgWidth - 1));
+            const iy = Math.floor(Math.min(Math.max(0, y), imgHeight - 1));
+            const idx = (iy * imgWidth + ix) * 4;
+            const r = imgData.data[idx];
+            const g = imgData.data[idx+1];
+            const b = imgData.data[idx+2];
+            const a = imgData.data[idx+3];
+            return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+        }
+        
+        // ---------- 绘制所有圆 (带柔和阴影，提升贺卡立体感) ----------
+        function drawAllCircles() {
+            if (!ctx) return;
+            // 先清空画布 (使用低饱和度米色底，模拟卡片内衬)
+            ctx.clearRect(0, 0, imgWidth, imgHeight);
+            // 绘制极浅的纹理底纹 (凸显圆形色彩)
+            ctx.fillStyle = "#fbf7ef";
+            ctx.fillRect(0, 0, imgWidth, imgHeight);
+            
+            // 为圆添加细腻投影 (让每个小圆有浮凸感)
+            // ctx.shadowColor = "rgba(0, 0, 0, 0.12)";
+            // ctx.shadowBlur = 4;
+            // ctx.shadowOffsetX = 1;
+            // ctx.shadowOffsetY = 1;
+            
+            // 遍历绘制所有圆 (高性能)
+            for (let i = 0; i < circles.length; i++) {
+                const c = circles[i];
+                // 根据圆心坐标获取该点真实图片颜色
+                const fillColor = getPixelColor(c.x, c.y);
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+                // 额外添加极细亮边 (柔和高光，增加精致度)
+                // ctx.shadowBlur = 2;
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.r - 0.5, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(255, 250, 240, 0.18)";
+                ctx.fill();
+                // 恢复主阴影
+                // ctx.shadowBlur = 4;
+            }
+            // 重置阴影避免影响后续
+            // ctx.shadowColor = "transparent";
+            // ctx.shadowBlur = 0;
+            // ctx.shadowOffsetX = 0;
+            // ctx.shadowOffsetY = 0;
+            
+            // 更新UI计数
+            // circleCountSpan.innerText = circles.length;
+        }
+        
+        // 触发重绘 (防抖合并)
+        function render() {
+            if (!imageLoaded) return;
+            drawAllCircles();
+        }
+        
+        // ---------- 核心分裂逻辑: 将圆分裂为4个子圆 (四叉树风格，圆心位于子区域中心) ----------
+        // 返回新生成的圆数组 (可能部分越界被裁剪或过滤)
+        function splitCircle(circle) {
+            const { x, y, r } = circle;
+            // 若半径已经小于最小阈值，不能再分裂 (保持现状)
+            if (r <= MIN_RADIUS) return [];
+            
+            const newRadius = r / 2;
+            if (newRadius < 0.5) return [];   // 过于微小无意义
+            
+            // 偏移量 = 当前半径的一半 (子区域中心偏移)
+            const offset = r / 2;
+            
+            // 四个新圆心坐标
+            const centers = [
+                { x: x - offset, y: y - offset },  // 左上
+                { x: x + offset, y: y - offset },  // 右上
+                { x: x - offset, y: y + offset },  // 左下
+                { x: x + offset, y: y + offset }   // 右下
+            ];
+            
+            const newCircles = [];
+            for (let i = 0; i < centers.length; i++) {
+                let cx = centers[i].x;
+                let cy = centers[i].y;
+                // 检查新圆是否完全在画布内 (圆心 ± 半径都在边界内)
+                const minX = cx - newRadius;
+                const maxX = cx + newRadius;
+                const minY = cy - newRadius;
+                const maxY = cy + newRadius;
+                
+                // 只有当圆完全在画布内时才添加
+                if (minX >= 0 && maxX <= imgWidth && minY >= 0 && maxY <= imgHeight) {
+                    newCircles.push({ x: cx, y: cy, r: newRadius });
+                }
+            }
+            return newCircles;
+        }
+        
+        // ---------- 处理点击: 查找被点击的圆 (优先最小半径 / 最顶层) ----------
+        // 由于圆可能重叠，选择包含点击点且半径最小的圆（更精准代表用户意图，通常是更细的圆）
+        function findCircleUnderPoint(px, py) {
+            let hitCircle = null;
+            let minRadius = Infinity;
+            for (let i = 0; i < circles.length; i++) {
+                const c = circles[i];
+                const dx = px - c.x;
+                const dy = py - c.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist <= c.r) {
+                    // 点击命中，优先选取半径最小的（分裂更细致的区域）
+                    if (c.r < minRadius) {
+                        minRadius = c.r;
+                        hitCircle = c;
+                    }
+                }
+            }
+            return hitCircle;
+        }
+        
+        // 执行分裂操作 (找到圆，替换为子圆)
+        function performSplitAt(mouseX, mouseY) {
+            if (!imageLoaded) return false;
+            const targetCircle = findCircleUnderPoint(mouseX, mouseY);
+            if (!targetCircle) return false;
+            
+            // 检查是否允许分裂 (半径大于最小阈值)
+            if (targetCircle.r <= MIN_RADIUS) {
+                // 圆点已经足够小，无法再分裂 (接近像素级，呈现清晰图像)
+                // 给用户轻微视觉反馈但不分裂
+                return false;
+            }
+            
+            // 生成子圆
+            const children = splitCircle(targetCircle);
+            if (children.length === 0) return false;
+            
+            // 找到该圆在数组中的索引并替换: 移除原圆，添加子圆
+            const index = circles.indexOf(targetCircle);
+            if (index !== -1) {
+                circles.splice(index, 1, ...children);
+            } else {
+                // 防御: 若没找到(理论上不会) 直接过滤后添加
+                circles = circles.filter(c => c !== targetCircle);
+                circles.push(...children);
+            }
+            
+            // 重新绘制
+            render();
+            return true;
+        }
+        
+        // ---------- 重置: 回到初始大圆 (圆心为图片中心，半径完全在边界内) ----------
+        function resetToInitial() {
+            if (!imageLoaded) return;
+            // 初始大圆: 圆心为图片中心，半径为正方形边长的一半，确保完全在边界内
+            const centerX = imgWidth / 2;
+            const centerY = imgHeight / 2;
+            const initRadius = Math.min(imgWidth, imgHeight) / 2;  // 完全填满正方形
+            
+            circles = [{
+                x: centerX,
+                y: centerY,
+                r: initRadius
+            }];
+            render();
+        }
+        
+        // ---------- 图片加载 + 初始化像素数据 + 重置圆 ----------
+        function loadImageAndInit(url) {
+            img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.onload = () => {
+                // 设置画布实际尺寸固定正方形 (保证1:1像素映射)
+                imgWidth = 700;
+                imgHeight = 700;
+                canvas.width = imgWidth;
+                canvas.height = imgHeight;
+                // 更新canvas CSS 自适应保持宽高比 (父级控制)
+                canvas.style.aspectRatio = `1`;
+                
+                // 将图片绘制到离屏canvas获取像素数据
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = imgWidth;
+                offCanvas.height = imgHeight;
+                const offCtx = offCanvas.getContext('2d');
+                offCtx.drawImage(img, 0, 0, imgWidth, imgHeight);
+                try {
+                    imgData = offCtx.getImageData(0, 0, imgWidth, imgHeight);
+                } catch(e) {
+                    console.warn("像素获取失败(跨域限制), 使用模拟数据");
+                    // fallback: 创建渐变色模拟数据防止完全空白
+                    const fallbackData = offCtx.createImageData(imgWidth, imgHeight);
+                    for (let i = 0; i < fallbackData.data.length; i += 4) {
+                        fallbackData.data[i] = 180 + (i % 80);     // R
+                        fallbackData.data[i+1] = 150 + (i % 60);   // G
+                        fallbackData.data[i+2] = 130;              // B
+                        fallbackData.data[i+3] = 255;
+                    }
+                    imgData = fallbackData;
+                }
+                imageLoaded = true;
+                // 重置圆状态
+                resetToInitial();
+            };
+            img.onerror = () => {
+                console.error("图片加载失败，使用内置渐变纹理替代");
+                // 生成艺术渐变纹理让体验不中断
+                const fakeWidth = 700, fakeHeight = 700;
+                imgWidth = fakeWidth;
+                imgHeight = fakeHeight;
+                canvas.width = fakeWidth;
+                canvas.height = fakeHeight;
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = fakeWidth;
+                offCanvas.height = fakeHeight;
+                const offCtx = offCanvas.getContext('2d');
+                const grd = offCtx.createLinearGradient(0, 0, fakeWidth, fakeHeight);
+                grd.addColorStop(0, '#b0c4b1');
+                grd.addColorStop(0.5, '#d9c8b2');
+                grd.addColorStop(1, '#c7af8b');
+                offCtx.fillStyle = grd;
+                offCtx.fillRect(0, 0, fakeWidth, fakeHeight);
+                offCtx.fillStyle = '#a77f5f';
+                offCtx.font = 'bold 20px "Segoe UI"';
+                offCtx.fillText("✨ 贺卡意境 ✨", fakeWidth/2-100, fakeHeight/2);
+                imgData = offCtx.getImageData(0, 0, fakeWidth, fakeHeight);
+                imageLoaded = true;
+                resetToInitial();
+            };
+            img.src = url;
+        }
+        
+        // ---------- 鼠标坐标转换 (canvas相对坐标) ----------
+        function getCanvasCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;   // canvas实际像素 / CSS显示宽度
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if (e.touches) {
+                // 移动端触摸支持
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+                e.preventDefault();
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            let canvasX = (clientX - rect.left) * scaleX;
+            let canvasY = (clientY - rect.top) * scaleY;
+            canvasX = Math.min(Math.max(0, canvasX), canvas.width);
+            canvasY = Math.min(Math.max(0, canvasY), canvas.height);
+            return { x: canvasX, y: canvasY };
+        }
+        
+        // 鼠标悬停 交互处理器
+        function onCanvasInteraction(e) {
+            if (!imageLoaded) return;
+            e.preventDefault();
+            const coord = getCanvasCoords(e);
+            const now = Date.now();
+            if (now - lastSplitTime < 100) return; // 防止太快连续分裂
+            const currentCircle = findCircleUnderPoint(coord.x, coord.y);
+            if (currentCircle && currentCircle.r > MIN_RADIUS) {
+                const success = performSplitAt(coord.x, coord.y);
+                if (success) {
+                    lastSplitTime = now;
+                }
+            }
+        }
+        
+        // 添加重置事件
+        // resetBtn.addEventListener('click', () => {
+        //     if (!imageLoaded) return;
+        //     resetToInitial();
+        //     // 附加反馈
+        //     canvas.style.transform = 'scale(0.99)';
+        //     setTimeout(() => { canvas.style.transform = ''; }, 150);
+        // });
+        
+        // 注册交互 (鼠标悬停)
+        canvas.addEventListener('mousemove', onCanvasInteraction);
+        
+        // 裁剪相关变量
+        const cropModal = document.getElementById('cropModal');
+        const cropImage = document.getElementById('cropImage');
+        const cropBox = document.getElementById('cropBox');
+        const cropHandle = document.getElementById('cropHandle');
+        const confirmCropBtn = document.getElementById('confirmCrop');
+        const cancelCropBtn = document.getElementById('cancelCrop');
+        let cropBoxData = { x: 0, y: 0, size: 200, isDragging: false, isResizing: false };
+        let croppedImageDataUrl = null;
+        
+        // 初始化裁剪框
+        function initCropBox() {
+            const imgDisplayWidth = cropImage.offsetWidth;
+            const imgDisplayHeight = cropImage.offsetHeight;
+            
+            // 初始化正方形框大小（取图片显示尺寸的较小值）
+            let boxSize = Math.min(imgDisplayWidth, imgDisplayHeight) * 0.7;
+            cropBoxData.size = boxSize;
+            cropBoxData.x = (imgDisplayWidth - boxSize) / 2;
+            cropBoxData.y = (imgDisplayHeight - boxSize) / 2;
+            
+            updateCropBoxPosition();
+        }
+        
+        function updateCropBoxPosition() {
+            cropBox.style.left = cropBoxData.x + 'px';
+            cropBox.style.top = cropBoxData.y + 'px';
+            cropBox.style.width = cropBoxData.size + 'px';
+            cropBox.style.height = cropBoxData.size + 'px';
+        }
+        
+        // 裁剪框按钮事件
+        cropBox.addEventListener('mousedown', (e) => {
+            if (e.target === cropHandle) {
+                cropBoxData.isResizing = true;
+            } else {
+                cropBoxData.isDragging = true;
+            }
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (cropBoxData.isDragging) {
+                const imgDisplayWidth = cropImage.offsetWidth;
+                const imgDisplayHeight = cropImage.offsetHeight;
+                cropBoxData.x += e.movementX;
+                cropBoxData.y += e.movementY;
+                cropBoxData.x = Math.max(0, Math.min(cropBoxData.x, imgDisplayWidth - cropBoxData.size));
+                cropBoxData.y = Math.max(0, Math.min(cropBoxData.y, imgDisplayHeight - cropBoxData.size));
+                updateCropBoxPosition();
+            } else if (cropBoxData.isResizing) {
+                const imgDisplayWidth = cropImage.offsetWidth;
+                const imgDisplayHeight = cropImage.offsetHeight;
+                cropBoxData.size += e.movementX + e.movementY;
+                const maxSize = Math.min(imgDisplayWidth - cropBoxData.x, imgDisplayHeight - cropBoxData.y);
+                cropBoxData.size = Math.max(50, Math.min(cropBoxData.size, maxSize));
+                updateCropBoxPosition();
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            cropBoxData.isDragging = false;
+            cropBoxData.isResizing = false;
+        });
+        
+        // 确认裁剪
+        confirmCropBtn.addEventListener('click', () => {
+            const imgDisplayWidth = cropImage.offsetWidth;
+            const imgDisplayHeight = cropImage.offsetHeight;
+            const naturalWidth = cropImage.naturalWidth;
+            const naturalHeight = cropImage.naturalHeight;
+            
+            // 计算缩放比例
+            const scaleX = naturalWidth / imgDisplayWidth;
+            const scaleY = naturalHeight / imgDisplayHeight;
+            
+            // 计算在原始图片中的裁剪坐标
+            const cropX = cropBoxData.x * scaleX;
+            const cropY = cropBoxData.y * scaleY;
+            const cropSize = cropBoxData.size * scaleX;
+            
+            // 创建裁剪后的canvas
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = 700;
+            cropCanvas.height = 700;
+            const cropCtx = cropCanvas.getContext('2d');
+            cropCtx.drawImage(cropImage, cropX, cropY, cropSize, cropSize, 0, 0, 700, 700);
+            
+            croppedImageDataUrl = cropCanvas.toDataURL();
+            loadImageAndInit(croppedImageDataUrl);
+            cropModal.classList.remove('active');
+        });
+        
+        // 取消裁剪
+        cancelCropBtn.addEventListener('click', () => {
+            cropModal.classList.remove('active');
+        });
+        
+        // 添加图片上传事件
+        uploadBtn.addEventListener('click', () => {
+            imageUpload.click();
+        });
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const tempImg = new Image();
+                    tempImg.onload = () => {
+                        cropImage.src = event.target.result;
+                        cropModal.classList.add('active');
+                        setTimeout(initCropBox, 100); // 等待图片加载完成
+                    };
+                    tempImg.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // 额外: 为了让贺卡更生动，显示加载占位，并加载默认图片
+        // 预置一张高质量低饱和度摄影 (picsum 104 柔和色调)
+        loadImageAndInit(DEFAULT_IMAGE_URL);
+        
+        // 窗口适配 (防抖重绘)
+        window.addEventListener('resize', () => {
+            if (imageLoaded) render();
+        });
+        
+        // 初始绘制占位(空转)
+        ctx.fillStyle = "#ede3d4";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // circleCountSpan.innerText = "0";
+        
+        // 说明: 随着不断分裂, 圆半径逐渐减半，最终半径小于MIN_RADIUS后停止。
+        // 每个小圆圆心颜色取自原始图像该坐标真实颜色，因此最终大量细小圆点拼贴出原始图片。
+        // 效果会从大圆单色 → 4色块 → 逐渐浮现图像细节，达到“清晰图片”的目标。
+        // 同时符合“低饱和度贺卡”主题: 背景卡片低饱和米色，圆点投影柔和。
+    })();
+</script>
+</body>
+</html>

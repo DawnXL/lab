@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>C(X)TI-CP粉属性测试 (Omega 公测版)</title>
+  <title>C(X)TI-CP粉属性测试</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap"
@@ -22,19 +22,24 @@
       <div class="card start-card">
         <p class="start-en-header">CHEN × XIUMIN SHIPPER DIAGNOSTIC REPORT</p>
 
-        <img src="images/cover.png" alt="C(X) logo" class="start-logo">
+        <img src="images/cover.jpg" alt="C(X) logo" class="start-logo">
 
-        <h1 class="start-title">CHEN × XIUMIN<br>粉丝成分 分析报告</h1>
+        <h1 class="start-title">CHEN × XIUMIN<br>粉丝属性测试</h1>
 
-        <p id="q-stats" class="start-count">20题，4大维度，17种结果（含1种隐藏人格）</p>
+        <p id="q-stats" class="start-count">25题，4大维度，17种结果（含1种隐藏人格）</p>
 
         <input id="nickname-input" class="nickname-input" type="text" placeholder="在此处输入昵称（可跳过）">
 
         <button id="btn-start" class="btn btn-primary">开始测试 →</button>
+
+        <p class="credits-text">策划/文案：锈锈冰柜、疲惫凉皮 | 策划/程序：饥饿电视<br>美术：气泡冰萃 | UI/文案：哎草团子</p>
       </div>
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════
+       QUESTION SCREEN
+       ═══════════════════════════════════════════════════════ -->
   <div id="screen-question" class="screen">
     <div class="app-frame">
       <!-- 顶部进度条与返回键 -->
@@ -60,28 +65,7 @@
         <div id="options-list" class="options-list">
           <!-- 选项动态生成 -->
         </div>
-
-        <!-- E 选项反馈逻辑 -->
-        <div class="e-option-wrap">
-          <button id="btn-e-option" class="option-e-btn">
-            <span class="opt-e-label">E</span>
-            <span>我有更好的答案</span>
-          </button>
-
-          <div id="e-feedback-area" class="e-feedback-area">
-            <textarea id="e-feedback-input" placeholder="请在这里输入您认为更适合的答案..."></textarea>
-          </div>
-        </div>
-
-        <!-- NEW BOTTOM FEEDBACK BUTTONS -->
-        <div class="bottom-feedback-actions">
-           <button id="btn-q-like" class="feedback-action-btn">❤️ 喜欢这题</button>
-           <button id="btn-q-dislike" class="feedback-action-btn">👎 不喜欢这题</button>
-           <button id="btn-q-next" class="feedback-action-btn">➡ 下一题</button>
-        </div>
       </div>
-
-      <!-- 底部导航已移除，改为点击选项自动跳转 -->
     </div>
   </div>
 
@@ -96,8 +80,6 @@
         <p class="result-of">的 C(X)TI 结果是：</p>
 
         <h1 id="result-name" class="result-name">小泡菜</h1>
-        <p id="result-cn" class="result-cn">正浓乱素</p>
-        <p id="result-code" class="result-code">ZNLS</p>
 
         <div id="result-img-wrap" class="result-img-wrap">
           <!-- 图片动态生成 -->
@@ -130,34 +112,49 @@
           <!-- 维度条动态生成 -->
         </div>
 
-        <!-- 总体评价 -->
-        <div class="overall-rating-wrap">
-          <p class="rating-title">这份报告测得准吗？</p>
-          <div id="rating-btns" class="rating-btns">
-            <button class="rating-btn" data-val="准">
-              <span class="rating-emoji">😊</span>
-              <span>准</span>
-            </button>
-            <button class="rating-btn" data-val="还行">
-              <span class="rating-emoji">😐</span>
-              <span>还行</span>
-            </button>
-            <button class="rating-btn" data-val="不准">
-              <span class="rating-emoji">☹️</span>
-              <span>不准</span>
-            </button>
-          </div>
-        </div>
-
         <!-- 操作按钮 -->
         <div class="result-actions">
           <button id="btn-save-img" class="btn btn-save-img">保存结果图片</button>
-          <button id="btn-copy-feedback" class="btn btn-copy-feedback">
-            👉👉一键复制反馈内容👈👈<br>
-            <span class="btn-subtext">退出后可粘贴发送给开发团队</span>
-          </button>
+          <button id="btn-view-profiles" class="btn btn-save-img">查看全部人格档案</button>
           <button id="btn-retry" class="btn-retry">重新测试</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       ALL PROFILES SCREEN
+       ═══════════════════════════════════════════════════════ -->
+  <div id="screen-all-profiles" class="screen">
+    <div class="app-frame">
+      <div class="profiles-page">
+        <h2 class="profiles-page-title">全部人格档案</h2>
+        <div id="profiles-gallery">
+          <!-- 由 JS renderAllProfiles() 动态生成 -->
+        </div>
+        <button id="btn-back-to-result" class="btn btn-secondary">← 返回测试结果</button>
+        <p class="credits-text">策划/文案：锈锈冰柜、疲惫凉皮 | 策划/程序：饥饿电视<br>美术：气泡冰萃 | UI/文案：哎草团子</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PROFILE DETAIL SCREEN
+       ═══════════════════════════════════════════════════════ -->
+  <div id="screen-profile-detail" class="screen">
+    <div class="app-frame">
+      <div id="profile-detail-card" class="profile-detail-card">
+        <h1 id="detail-name" class="detail-name"></h1>
+        <div id="detail-img-wrap" class="result-img-wrap"></div>
+        <div class="result-divider"></div>
+        <p id="detail-desc" class="result-desc"></p>
+        <div id="detail-archetype-section" class="archetype-section">
+          <p class="archetype-prefix">所属四大型：</p>
+          <span id="detail-archetype-tag" class="archetype-tag"></span>
+          <p id="detail-archetype-desc" class="archetype-desc"></p>
+        </div>
+        <p id="detail-dims-text" class="detail-dims-text"></p>
+        <button id="btn-back-to-profiles" class="btn btn-secondary">← 返回人格列表</button>
       </div>
     </div>
   </div>
