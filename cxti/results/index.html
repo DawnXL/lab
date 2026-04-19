@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C(X)TI · 全部人格档案</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <!-- 画廊列表页 -->
+  <div id="screen-all-profiles" class="screen active">
+    <div class="app-frame">
+      <div class="profiles-page">
+        <h2 class="profiles-page-title">全部人格档案</h2>
+        <div id="profiles-gallery"></div>
+        <p class="credits-text">策划/文案：锈锈冰柜、疲惫凉皮 | 策划/程序：饥饿电视<br>美术：气泡冰萃 | UI/文案：哎草团子</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 人格详情页 -->
+  <div id="screen-profile-detail" class="screen">
+    <div class="app-frame">
+      <div id="profile-detail-card" class="profile-detail-card">
+        <h1 id="detail-name" class="detail-name"></h1>
+        <p id="detail-stat-line" class="stat-line"></p>
+        <div id="detail-img-wrap" class="result-img-wrap"></div>
+        <div class="result-divider"></div>
+        <p id="detail-desc" class="result-desc"></p>
+        <div id="detail-archetype-section" class="archetype-section">
+          <p class="archetype-prefix">所属四大型：</p>
+          <span id="detail-archetype-tag" class="archetype-tag"></span>
+          <p id="detail-archetype-desc" class="archetype-desc"></p>
+        </div>
+        <p id="detail-dims-text" class="detail-dims-text"></p>
+        <button id="btn-back-to-profiles" class="btn btn-secondary">← 返回人格列表</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../data/results.js"></script>
+  <script>
+    // ── 常量（与 app.js 保持一致）────────────────────────────
+    const SUPABASE_URL = 'https://qhraciuakpecdzztfkfk.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFocmFjaXVha3BlY2R6enRma2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODIzODUsImV4cCI6MjA5MjE1ODM4NX0.f36pZzpk0r7Ha7znWG_yzdmEjjP992TSq7YRxw6-fdc';
+
+    const ARCHETYPE_COLORS = {
+      '信仰狂热型': { bg: '#F5BEC1', text: '#1A3560' },
+      '低调洁癖型': { bg: '#CBC4E6', text: '#1A3560' },
+      '混乱快乐型': { bg: '#F6E5A5', text: '#1A3560' },
+      '佛系体验型': { bg: '#BDD0EE', text: '#1A3560' },
+    };
+
+    const GALLERY_ROWS = [
+      { archetype: '信仰狂热型', codes: ['ZNXS','ZNXH','ENXS','ENXH'], colorClass: 'arc-red' },
+      { archetype: '低调洁癖型', codes: ['ZDXS','ZDXH','EDXS','EDXH'], colorClass: 'arc-purple' },
+      { archetype: '混乱快乐型', codes: ['ZNLS','ZNLH','ENLS','ENLH'], colorClass: 'arc-yellow' },
+      { archetype: '佛系体验型', codes: ['ZDLS','ZDLH','EDLS','EDLH'], colorClass: 'arc-blue' },
+    ];
+
+    const CODE_DIM_MAP = {
+      Z:'正义', E:'邪恶', N:'浓烈', D:'淡然',
+      X:'守序', L:'混乱', S:'素食', H:'荤食'
+    };
+
+    // ── 工具 ─────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      $(id).classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    // ── 统计 ─────────────────────────────────────────────────
+    let statsCache = null;
+    async function fetchStats() {
+      if (statsCache) return statsCache;
+      if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/results?select=code`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (!res.ok) return null;
+        const rows = await res.json();
+        const counts = {};
+        rows.forEach(r => { counts[r.code] = (counts[r.code] || 0) + 1; });
+        statsCache = { total: rows.length, counts };
+        return statsCache;
+      } catch { return null; }
+    }
+
+    function statLine(code, stats) {
+      if (!stats || stats.total === 0) return '';
+      const n = stats.counts[code] || 0;
+      const pct = (n / stats.total * 100).toFixed(1);
+      return `目前有 ${pct}% 的玩家测得此人格`;
+    }
+
+    // ── 画廊渲染 ─────────────────────────────────────────────
+    function renderAllProfiles() {
+      const gallery = $('profiles-gallery');
+      gallery.innerHTML = '';
+
+      GALLERY_ROWS.forEach(row => {
+        const rowEl = document.createElement('div');
+        rowEl.className = `archetype-row ${row.colorClass}`;
+        const grid = document.createElement('div');
+        grid.className = 'profiles-grid';
+        row.codes.forEach(code => {
+          const r = RESULTS[code];
+          const thumb = document.createElement('div');
+          thumb.className = 'profile-thumb';
+          thumb.innerHTML = `
+            <img src="../${r.img}" alt="${r.name}" class="thumb-img">
+            <span class="thumb-name">${r.name}</span>
+          `;
+          thumb.onclick = () => openProfileDetail(code);
+          grid.appendChild(thumb);
+        });
+        rowEl.appendChild(grid);
+        gallery.appendChild(rowEl);
+      });
+
+      // SMYC 行
+      const smycRow = document.createElement('div');
+      smycRow.className = 'archetype-row arc-grey';
+      const smycGrid = document.createElement('div');
+      smycGrid.className = 'profiles-grid';
+      const smycThumb = document.createElement('div');
+      smycThumb.className = 'profile-thumb';
+      smycThumb.innerHTML = `
+        <img src="../${RESULTS['SMYC'].img}" alt="？" class="thumb-img">
+        <span class="thumb-name">？？？？？</span>
+      `;
+      smycThumb.onclick = () => openProfileDetail('SMYC_GALLERY');
+      smycGrid.appendChild(smycThumb);
+      smycRow.appendChild(smycGrid);
+      gallery.appendChild(smycRow);
+    }
+
+    // ── 详情页 ───────────────────────────────────────────────
+    function openProfileDetail(code) {
+      const isSmycGallery = (code === 'SMYC_GALLERY');
+      const r = isSmycGallery ? RESULTS['SMYC'] : RESULTS[code];
+      const card = $('profile-detail-card');
+
+      if (isSmycGallery) {
+        card.style.backgroundColor = r.color;
+        card.style.color = r.text;
+      } else {
+        const arcColors = ARCHETYPE_COLORS[r.archetype] || { bg: r.color, text: r.text };
+        card.style.backgroundColor = arcColors.bg;
+        card.style.color = arcColors.text;
+      }
+
+      $('detail-name').textContent = isSmycGallery ? '？？？？？' : r.name;
+      $('detail-stat-line').textContent = '';
+      if (!isSmycGallery) {
+        fetchStats().then(s => { $('detail-stat-line').textContent = statLine(code, s); });
+      }
+
+      const imgWrap = $('detail-img-wrap');
+      if (r.img) {
+        imgWrap.innerHTML = `<img src="../${r.img}" alt="${r.name}" class="result-img">`;
+        imgWrap.style.display = 'block';
+      } else {
+        imgWrap.style.display = 'none';
+      }
+
+      $('detail-desc').textContent = isSmycGallery
+        ? '主题曲：？？？？？！——？？？？！？？？？？？？！'
+        : r.desc;
+
+      const arcSection = $('detail-archetype-section');
+      const arcPrefix = arcSection.querySelector('.archetype-prefix');
+      if (isSmycGallery) {
+        arcPrefix.textContent = '';
+        $('detail-archetype-tag').textContent = '你不属于四大类型之一';
+        $('detail-archetype-desc').textContent = '系统识别到用户在部分题目中选择异常，触发隐藏判定，无视其他条件直接进入此词条。';
+      } else {
+        arcPrefix.textContent = '所属四大型：';
+        const arc = ARCHETYPES[r.archetype];
+        $('detail-archetype-tag').textContent = `${r.archetype} · ${arc ? arc.title : ''}`;
+        $('detail-archetype-desc').textContent = arc ? arc.desc : '';
+      }
+
+      const dimsEl = $('detail-dims-text');
+      if (isSmycGallery) {
+        dimsEl.textContent = '八维倾向：？？？？？';
+      } else {
+        const dims = code.split('').map(c => CODE_DIM_MAP[c] || c).join('，');
+        dimsEl.textContent = `八维倾向：${dims}`;
+      }
+
+      showScreen('screen-profile-detail');
+    }
+
+    // ── 启动 ─────────────────────────────────────────────────
+    $('btn-back-to-profiles').onclick = () => showScreen('screen-all-profiles');
+    renderAllProfiles();
+  </script>
+</body>
+</html>

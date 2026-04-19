@@ -51,6 +51,34 @@ const CODE_DIM_MAP = {
 const SUPABASE_URL = 'https://qhraciuakpecdzztfkfk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFocmFjaXVha3BlY2R6enRma2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1ODIzODUsImV4cCI6MjA5MjE1ODM4NX0.f36pZzpk0r7Ha7znWG_yzdmEjjP992TSq7YRxw6-fdc';
 
+// 统计缓存（打开结果页时拉一次）
+let statsCache = null;
+async function fetchStats() {
+  if (statsCache) return statsCache;
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/results?select=code`, {
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      }
+    });
+    if (!res.ok) return null;
+    const rows = await res.json();
+    const counts = {};
+    rows.forEach(r => { counts[r.code] = (counts[r.code] || 0) + 1; });
+    statsCache = { total: rows.length, counts };
+    return statsCache;
+  } catch { return null; }
+}
+
+function statLine(code, stats) {
+  if (!stats || stats.total === 0) return '';
+  const n = stats.counts[code] || 0;
+  const pct = (n / stats.total * 100).toFixed(1);
+  return `目前有 ${pct}% 的玩家测得此人格`;
+}
+
 function reportResult(code) {
   if (localStorage.getItem('cxti_submitted')) return;
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
@@ -252,6 +280,8 @@ function renderResult(code, result) {
 
   $('result-nickname').textContent = state.nickname;
   $('result-name').textContent = result.name || result.cn;
+  $('result-stat-line').textContent = '';
+  fetchStats().then(s => { $('result-stat-line').textContent = statLine(code, s); });
 
   const imgWrap = $('result-img-wrap');
   if (result.img) {
@@ -420,6 +450,10 @@ function openProfileDetail(code) {
 
   // 标题
   $('detail-name').textContent = isSmycGallery ? '？？？？？' : r.name;
+  $('detail-stat-line').textContent = '';
+  if (!isSmycGallery) {
+    fetchStats().then(s => { $('detail-stat-line').textContent = statLine(code, s); });
+  }
 
   // 图片
   const imgWrap = $('detail-img-wrap');
@@ -494,12 +528,13 @@ function init() {
     // 截图期间隐藏操作按钮区，保留卡片外框完整
     card.classList.add('capturing');
 
+    const targetScale = Math.max(3, (window.devicePixelRatio || 1) * 2);
     html2canvas(card, {
-      scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: -window.scrollY
+      scale: targetScale, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: -window.scrollY
     }).then(canvas => {
       card.classList.remove('capturing');
       try {
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        const dataUrl = canvas.toDataURL('image/png');
         $('overlay-img-container').innerHTML = `<img src="${dataUrl}" alt="Result">`;
         $('result-overlay').style.display = 'flex';
       } catch (e) {

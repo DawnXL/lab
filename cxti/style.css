@@ -584,6 +584,17 @@ body {
   color: inherit;
 }
 
+/* ── 统计小字 ── */
+.stat-line {
+  font-size: 0.72rem;
+  color: rgba(0, 0, 0, 0.45);
+  text-align: center;
+  margin: -2px 0 10px;
+  font-weight: 400;
+  min-height: 1em;
+}
+.stat-line:empty { display: none; }
+
 /* ── Actions ── */
 
 /* 截图时隐藏操作按钮区，卡片外框保持完整 */
