@@ -19,7 +19,7 @@ const TAG_MAP = {
 
 const DIM_LABELS = {
   B: { pos: '正义', neg: '邪恶', codePos: 'Z', codeNeg: 'E', descPos: '城堡就该锁死，不管外界怎么说都无所谓！', descNeg: '他们已经BE了，路过吃一口，但是他们BE了。' },
-  A: { pos: '守序', neg: '混乱', codePos: 'X', codeNeg: 'L', descPos: '不拆不逆，城堡反过来了就是废区一片！', descNeg: '偶尔或者能接受拆逆，还有其他关系好的人嘛！都是同人不用那么计较。' },
+  A: { pos: '守序', neg: '混乱', codePos: 'X', codeNeg: 'L', descPos: '不太能接受拆或逆的变化，更习惯看到相对固定、稳定的关系模式，城堡如果变形可能会有点不适感。', descNeg: '对拆或逆的变化接受度比较高，有时也会觉得不同组合或关系流动性是有趣的，同人世界里不一定需要太固定。' },
   C: { pos: '淡然', neg: '浓烈', codePos: 'D', codeNeg: 'N', descPos: '有饭可以吃一口，但路过不一定吃。', descNeg: '对于是否能吃上饭非常在意，如果没有合适的产出，会主动约稿或者自己试图生产。' },
   D: { pos: '素食', neg: '荤食', codePos: 'S', codeNeg: 'H', descPos: '倾向于清水或者纯爱，情感链接比肉体重要。', descNeg: '开车！开车！给我像红牛和梅奔一样冲！！' },
 };
@@ -65,7 +65,7 @@ function reportResult(code) {
     body: JSON.stringify({ code })
   })
     .then(res => { if (res.ok) localStorage.setItem('cxti_submitted', code); })
-    .catch(() => {});
+    .catch(() => { });
 }
 
 // ── Quiz State ────────────────────────────────────────────
@@ -491,9 +491,13 @@ function init() {
     btn.textContent = '生成中...';
     btn.disabled = true;
 
+    // 截图期间隐藏操作按钮区，保留卡片外框完整
+    card.classList.add('capturing');
+
     html2canvas(card, {
       scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', scrollY: -window.scrollY
     }).then(canvas => {
+      card.classList.remove('capturing');
       try {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         $('overlay-img-container').innerHTML = `<img src="${dataUrl}" alt="Result">`;
@@ -503,6 +507,7 @@ function init() {
       }
       btn.textContent = originalText; btn.disabled = false;
     }).catch(err => {
+      card.classList.remove('capturing');
       alert('生成图片失败，请重试');
       btn.textContent = originalText; btn.disabled = false;
     });

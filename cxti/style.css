@@ -586,6 +586,9 @@ body {
 
 /* ── Actions ── */
 
+/* 截图时隐藏操作按钮区，卡片外框保持完整 */
+.result-card.capturing .result-actions { display: none; }
+
 .result-actions {
   display: flex;
   flex-direction: column;
